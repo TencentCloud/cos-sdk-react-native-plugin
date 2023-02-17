@@ -1,5 +1,5 @@
 {
-  "name": "tencentcloud-cos-sdk-react-native",
+  "name": "react-native-cos-sdk",
   "version": "1.0.0",
   "description": "Tencent COS XML SDK for React Native",
   "main": "lib/commonjs/index",

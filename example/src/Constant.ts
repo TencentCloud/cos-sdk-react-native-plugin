@@ -1,4 +1,4 @@
-import Cos from 'tencentcloud-cos-sdk-react-native';
+import Cos from 'react-native-cos-sdk';
 import type { CosService } from 'src/cos_service';
 import {PERSIST_BUCKET_REGION} from './config/config';
 

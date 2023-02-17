@@ -7,7 +7,7 @@ import type { SessionQCloudCredentials } from './data_model/credentials';
 import { IllegalArgumentError } from './data_model/errors';
 
 const LINKING_ERROR =
-  `The package 'tencentcloud-cos-sdk-react-native' doesn't seem to be linked. Make sure: \n\n` +
+  `The package 'react-native-cos-sdk' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
@@ -79,6 +79,7 @@ class Cos {
       return QCloudCosReactNative.initWithPlainSecret(secretId, secretKey)
     } else {
       console.log("COS Service has been inited before.");
+      return undefined;
     }
   }
 
@@ -92,6 +93,7 @@ class Cos {
       return QCloudCosReactNative.initWithSessionCredentialCallback()
     } else {
       console.log("COS Service has been inited before.");
+      return undefined;
     }
   }
 

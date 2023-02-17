@@ -7,7 +7,7 @@ import {
   SafeAreaInsetsContext
 } from 'react-native-safe-area-context';
 import type { BucketContents } from 'src/data_model/object';
-import Cos from 'tencentcloud-cos-sdk-react-native';
+import Cos from 'react-native-cos-sdk';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Test'>;
 export class TestScreen extends React.Component<Props> {

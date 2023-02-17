@@ -1,5 +1,5 @@
 import * as React from 'react';
-import Cos from 'tencentcloud-cos-sdk-react-native';
+import Cos from 'react-native-cos-sdk';
 import Toast from 'react-native-toast-message';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { StyleSheet, View, Text, FlatList, RefreshControl, ActivityIndicator, TouchableHighlight, StatusBar, TouchableOpacity } from 'react-native';

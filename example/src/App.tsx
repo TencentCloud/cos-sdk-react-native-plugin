@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TouchableHighlight, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
-import Cos from 'tencentcloud-cos-sdk-react-native';
+import Cos from 'react-native-cos-sdk';
 import {USE_SESSION_TOKEN_CREDENTIAL, STS_URL, COS_SECRET_ID, COS_SECRET_KEY} from './config/config';
 import { ObjectListScreen } from './object/ObjectListScreen';
 import { BucketListScreen } from './bucket/BucketListScreen';

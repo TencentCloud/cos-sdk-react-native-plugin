@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Toast from 'react-native-toast-message';
-import Cos from 'tencentcloud-cos-sdk-react-native';
+import Cos from 'react-native-cos-sdk';
 import { StyleSheet, View, Text, Button, StatusBar } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { DocumentDirectoryPath } from 'react-native-fs'
