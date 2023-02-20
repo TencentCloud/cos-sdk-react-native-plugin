@@ -2,6 +2,7 @@
 - [SDK 源码下载](https://github.com/TencentCloud/cos-sdk-react-native-plugin)
 - [示例 Demo](https://github.com/TencentCloud/cos-sdk-react-native-plugin/tree/main/example)
 - [SDK 更新日志](https://github.com/TencentCloud/cos-sdk-react-native-plugin/blob/master/CHANGELOG.md)
+- [更多使用方式](https://cloud.tencent.com/document/product/436/86696)
 - [NPM 地址](https://www.npmjs.com/package/react-native-cos-sdk)
 
 ## 准备工作
