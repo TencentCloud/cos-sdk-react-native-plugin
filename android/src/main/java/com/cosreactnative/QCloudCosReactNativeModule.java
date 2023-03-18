@@ -1,15 +1,7 @@
 package com.cosreactnative;
 
-import androidx.annotation.NonNull;
-
-import com.facebook.react.bridge.Promise;
-import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.bridge.ReactContextBaseJavaModule;
-import com.facebook.react.bridge.ReactMethod;
-import com.facebook.react.module.annotations.ReactModule;
-
-
 import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
@@ -24,7 +16,9 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
+import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.google.gson.Gson;
 import com.tencent.cos.xml.CosXmlBaseService;
 import com.tencent.cos.xml.CosXmlService;
@@ -37,6 +31,7 @@ import com.tencent.cos.xml.listener.CosXmlResultListener;
 import com.tencent.cos.xml.listener.CosXmlResultSimpleListener;
 import com.tencent.cos.xml.model.CosXmlRequest;
 import com.tencent.cos.xml.model.CosXmlResult;
+import com.tencent.cos.xml.model.PresignedUrlRequest;
 import com.tencent.cos.xml.model.bucket.DeleteBucketRequest;
 import com.tencent.cos.xml.model.bucket.GetBucketAccelerateRequest;
 import com.tencent.cos.xml.model.bucket.GetBucketAccelerateResult;
@@ -75,11 +70,9 @@ import com.tencent.qcloud.core.auth.ShortTimeCredentialProvider;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import android.net.Uri;
 
 @ReactModule(name = QCloudCosReactNativeModule.NAME)
 public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
@@ -312,6 +305,37 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   public void getObjectUrl(@NonNull String serviceKey, @NonNull String bucket, @NonNull String key, @NonNull String region, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     promise.resolve(service.getObjectUrl(bucket, region, key));
+  }
+
+  @ReactMethod
+  public void getPresignedUrl(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String signValidTime,
+                              @Nullable String signHost, @Nullable ReadableMap parameters,
+                              @Nullable String region, final Promise promise) {
+    CosXmlService service = getCosXmlService(serviceKey);
+    PresignedUrlRequest presignedUrlRequest = new PresignedUrlRequest(bucket, cosPath);
+    presignedUrlRequest.setRequestMethod("GET");
+    if(signValidTime != null){
+      presignedUrlRequest.setSignKeyTime(Integer.parseInt(signValidTime));
+    }
+    if(signHost != null && !Boolean.parseBoolean(signHost)){
+      presignedUrlRequest.addNoSignHeader("Host");
+    }
+    if(parameters != null){
+      Map<String, String> parametersMap = new HashMap<>();
+      ReadableMapKeySetIterator iterator = parameters.keySetIterator();
+      while (iterator.hasNextKey()) {
+        String key = iterator.nextKey();
+        parametersMap.put(key, parameters.getString(key));
+      }
+      presignedUrlRequest.setQueryParameters(parametersMap);
+    }
+    try {
+      String urlWithSign = service.getPresignedURL(presignedUrlRequest);
+      promise.resolve(urlWithSign);
+    } catch (CosXmlClientException e) {
+      e.printStackTrace();
+      promise.reject(e);
+    }
   }
 
   @ReactMethod
@@ -930,20 +954,26 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
         if (!TextUtils.isEmpty(resultCallbackKey)) {
           runMainThread(() -> {
-              if (task instanceof COSXMLUploadTask) {
-                WritableMap params = Arguments.createMap();
-                params.putString("transferKey", transferKey);
-                params.putString("callbackKey", resultCallbackKey);
-                reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                  .emit(Constants.COS_EMITTER_RESULT_SUCCESS_CALLBACK, params);
-              } else {
-                WritableMap params = Arguments.createMap();
-                params.putString("transferKey", transferKey);
-                params.putString("callbackKey", resultCallbackKey);
-                params.putMap("headers", simplifyHeader(cosXmlResult.headers));
-                reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                  .emit(Constants.COS_EMITTER_RESULT_SUCCESS_CALLBACK, params);
+            WritableMap params = Arguments.createMap();
+            params.putString("transferKey", transferKey);
+            params.putString("callbackKey", resultCallbackKey);
+            WritableMap header = simplifyHeader(cosXmlResult.headers);
+
+            if (task instanceof COSXMLUploadTask) {
+              WritableMap uploadResultMap = Arguments.createMap();
+              COSXMLUploadTask.COSXMLUploadTaskResult uploadResult =
+                (COSXMLUploadTask.COSXMLUploadTaskResult) cosXmlResult;
+              uploadResultMap.putString("accessUrl", cosXmlResult.accessUrl);
+              uploadResultMap.putString("eTag", uploadResult.eTag);
+              if(header.hasKey("x-cos-hash-crc64ecma")){
+                uploadResultMap.putString("crc64ecma", header.getString("x-cos-hash-crc64ecma"));
               }
+                params.putMap("headers", uploadResultMap);
+              } else {
+                params.putMap("headers", header);
+              }
+            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+              .emit(Constants.COS_EMITTER_RESULT_SUCCESS_CALLBACK, params);
             }
           );
         }

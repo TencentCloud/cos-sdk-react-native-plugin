@@ -93,6 +93,7 @@ export class UploadScreen extends React.Component<Props> {
       let cosTransferManger: CosTransferManger = await this.getTransferManger();
       // 上传成功回调
       let successCallBack = (header?: object) => {
+        console.log(header);
         this.setState({
           resultString: `文件已上传到COS：${cosPath}`,
           resultColor: "gray"

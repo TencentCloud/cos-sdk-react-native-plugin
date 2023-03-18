@@ -203,6 +203,51 @@ export class TestScreen extends React.Component<Props> {
                 }}
               />
             </View>
+            <View style={styles.button}>
+              <Button
+                title="获取对象url"
+                onPress={async () => {
+                  // 存储桶名称，由bucketname-appid 组成，appid必须填入，可以在COS控制台查看存储桶名称。 https://console.cloud.tencent.com/cos5/bucket
+                  let bucket = "mobile-ut-1253960454";
+                  // 存储桶所在地域简称，例如广州地区是 ap-guangzhou
+                  let region = "ap-guangzhou";
+                  // 对象在存储桶中的位置标识符，即对象键
+                  let cosKey = "test.png";
+                  try {
+                    let service = await getDefaultService();
+                    let objectUrl = await service.getObjectUrl(bucket, cosKey, region);
+                    console.log(objectUrl);
+                  } catch (e) {
+                    // 失败后会抛异常 根据异常进行业务处理
+                    console.log(e);
+                  }
+                }}
+              />
+            </View>
+            <View style={styles.button}>
+              <Button
+                title="预签名链接"
+                onPress={async () => {
+                  // 存储桶名称，由bucketname-appid 组成，appid必须填入，可以在COS控制台查看存储桶名称。 https://console.cloud.tencent.com/cos5/bucket
+                  let bucket = "mobile-ut-1253960454";
+                  // 对象在存储桶中的位置标识符，即对象键
+                  let cosKey = "test.png";
+
+                  try {
+                    let service = await getDefaultService();
+                    let objectUrl = await service.getPresignedUrl(bucket,cosKey,{
+                      signValidTime: 500, 
+                      signHost: true, 
+                      parameters: {"test1k":"test1v", "test2k":"test2v"}
+                    });
+                    console.log(objectUrl);
+                  } catch (e) {
+                    // 失败后会抛异常 根据异常进行业务处理
+                    console.log(e);
+                  }
+                }}
+              />
+            </View>
           </View>
         }
       </SafeAreaInsetsContext.Consumer>

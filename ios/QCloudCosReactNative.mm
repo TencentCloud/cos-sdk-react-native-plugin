@@ -503,6 +503,54 @@ RCT_REMAP_METHOD(getObjectUrl,
     resolve([service getURLWithBucket:bucket object:key withAuthorization:false regionName:region]);
 }
 
+RCT_REMAP_METHOD(getPresignedUrl,
+                 getPresignedUrlServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath signValidTime:(nullable NSString *)signValidTime
+                 signHost:(nullable NSString *)signHost parameters:(nullable NSDictionary *)parameters region:(nullable NSString *)region
+                 withResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject)
+{
+    QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
+    QCloudGetPresignedURLRequest* getPresignedURLRequest = [[QCloudGetPresignedURLRequest alloc] init];
+
+    // 存储桶名称，由BucketName-Appid 组成，可以在COS控制台查看 https://console.cloud.tencent.com/cos5/bucket
+    getPresignedURLRequest.bucket = bucket;
+    // 对象键，是对象在 COS 上的完整路径，如果带目录的话，格式为 "video/xxx/movie.mp4"
+    getPresignedURLRequest.object = cosPath;
+    getPresignedURLRequest.HTTPMethod = @"GET";
+
+    if(signValidTime){
+        getPresignedURLRequest.expires = [NSDate dateWithTimeIntervalSinceNow:[signValidTime intValue]];
+    }
+    
+    if(signHost){
+        // 获取预签名函数，默认签入Header Host；您也可以选择不签入Header Host，但可能导致请求失败或安全漏洞
+        getPresignedURLRequest.signHost = [signHost boolValue];
+    }
+    
+    if(parameters){
+        // http 请求参数，传入的请求参数需与实际请求相同，能够防止用户篡改此HTTP请求的参数
+        for (NSString *parametersKey in parameters) {
+            [getPresignedURLRequest setValue:[parameters objectForKey:parametersKey] forRequestParameter:parametersKey];
+        }
+    }
+
+    if(region){
+        getPresignedURLRequest.regionName = region;
+    }
+
+    [getPresignedURLRequest setFinishBlock:^(QCloudGetPresignedURLResult * _Nonnull result,
+                                             NSError * _Nonnull error) {
+        if(error == nil){
+            // 预签名 URL
+            resolve(result.presienedURL);
+        } else {
+            [self rejectError:error withRejecter:reject];
+        }
+    }];
+
+    [service getPresignedURL:getPresignedURLRequest];
+}
+
 RCT_REMAP_METHOD(getService,
                  getServiceServiceKey:(nonnull NSString *)serviceKey
                  withResolver:(RCTPromiseResolveBlock)resolve
@@ -541,7 +589,12 @@ RCT_REMAP_METHOD(headBucket,
     }
     [request setFinishBlock:^(id outputObject,NSError*error) {
         if(outputObject){
-            resolve([[outputObject __originHTTPURLResponse__] allHeaderFields]);
+            NSDictionary* headerAll = [[outputObject __originHTTPURLResponse__] allHeaderFields];
+            NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
+            for (NSString *key in headerAll) {
+                [resultDictionary setObject:[headerAll objectForKey:key] forKey:[key lowercaseString]];
+            }
+            resolve(resultDictionary);
         } else {
             [self rejectError:error withRejecter:reject];
         }
@@ -566,7 +619,12 @@ RCT_REMAP_METHOD(headObject,
     }
     [request setFinishBlock:^(id outputObject,NSError*error) {
         if(outputObject){
-            resolve([[outputObject __originHTTPURLResponse__] allHeaderFields]);
+            NSDictionary* headerAll = [[outputObject __originHTTPURLResponse__] allHeaderFields];
+            NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
+            for (NSString *key in headerAll) {
+                [resultDictionary setObject:[headerAll objectForKey:key] forKey:[key lowercaseString]];
+            }
+            resolve(resultDictionary);
         } else {
             [self rejectError:error withRejecter:reject];
         }
@@ -742,10 +800,15 @@ RCT_REMAP_METHOD(download,
         
         if(resultCallbackKey){
             if(error == nil){
+                NSDictionary* headerAll = [[outputObject __originHTTPURLResponse__] allHeaderFields];
+                NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
+                for (NSString *key in headerAll) {
+                    [resultDictionary setObject:[headerAll objectForKey:key] forKey:[key lowercaseString]];
+                }
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                                   userInfo:@{@"eventName":COS_EMITTER_RESULT_SUCCESS_CALLBACK,
                                                                              @"eventBody":@{
-                                                                                 @"transferKey": transferKey, @"callbackKey":resultCallbackKey, @"header":(NSDictionary *)outputObject
+                                                                                 @"transferKey": transferKey, @"callbackKey":resultCallbackKey, @"headers":resultDictionary
                                                                              }}];
             } else {
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
@@ -1008,10 +1071,19 @@ RCT_REMAP_METHOD(upload,
         
         if(resultCallbackKey){
             if(error == nil){
+                NSDictionary* headerAll = [[result __originHTTPURLResponse__] allHeaderFields];
+                NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
+                NSString* encodedAccessUrl = [result.location stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+                [resultDictionary setObject:encodedAccessUrl forKey:@"accessUrl"];
+                [resultDictionary setObject:result.eTag forKey:@"eTag"];
+                NSString* crc64ecma = [headerAll objectForKey: @"x-cos-hash-crc64ecma"];
+                if(crc64ecma){
+                    [resultDictionary setObject:crc64ecma forKey:@"crc64ecma"];
+                }
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                                   userInfo:@{@"eventName":COS_EMITTER_RESULT_SUCCESS_CALLBACK,
                                                                              @"eventBody":@{
-                                                                                 @"transferKey": transferKey, @"callbackKey":resultCallbackKey, @"header":@{}
+                                                                                 @"transferKey": transferKey, @"callbackKey":resultCallbackKey, @"headers":resultDictionary
                                                                              }}];
             } else {
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil

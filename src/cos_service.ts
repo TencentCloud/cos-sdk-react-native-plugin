@@ -1,6 +1,6 @@
 import type { ListAllMyBuckets } from './data_model/bucket';
 import type { BucketContents } from './data_model/object';
-import type { GutBucketParameters, PutBucketParameters } from './data_model/parameters';
+import type { GetBucketParameters, PutBucketParameters, PresignedUrlParameters } from './data_model/parameters';
 
 export class CosService {
   private cosServiceModule: any;
@@ -14,6 +14,23 @@ export class CosService {
   getObjectUrl(bucket: string, cosPath: string, region: string): Promise<string> {
     return this.cosServiceModule.getObjectUrl(this.serviceKey, bucket, cosPath, region)
   }
+
+  getPresignedUrl(
+    bucket: string,
+    cosPath: string,
+    parameters?: PresignedUrlParameters
+  ): Promise<string> {
+    return this.cosServiceModule.getPresignedUrl(
+      this.serviceKey, 
+      bucket, 
+      cosPath, 
+      parameters?.signValidTime != undefined ?parameters.signValidTime.toString():parameters?.signValidTime,
+      parameters?.signHost != undefined ?parameters.signHost.toString():parameters?.signHost,
+      parameters?.parameters, 
+      parameters?.region
+    );
+  }
+
 
   headObject(bucket: string, cosPath: string,
     versionId?: string, region?: string): Promise<object>{
@@ -31,30 +48,30 @@ export class CosService {
     let jsonString = await this.cosServiceModule.getService(this.serviceKey)
     return JSON.parse(jsonString)
   }
-  async getBucket(bucket: string, parameters: GutBucketParameters): Promise<BucketContents>{
+  async getBucket(bucket: string, parameters?: GetBucketParameters): Promise<BucketContents>{
       let jsonString = await this.cosServiceModule.getBucket(
         this.serviceKey, 
         bucket, 
-        parameters.region, 
-        parameters.prefix, 
-        parameters.delimiter, 
-        parameters.encodingType, 
-        parameters.marker, 
-        parameters.maxKeys?parameters.maxKeys.toString():parameters.maxKeys
+        parameters?.region, 
+        parameters?.prefix, 
+        parameters?.delimiter, 
+        parameters?.encodingType, 
+        parameters?.marker, 
+        parameters?.maxKeys != undefined ?parameters.maxKeys.toString():parameters?.maxKeys
       )    
     return JSON.parse(jsonString)
   }
   
-  putBucket(bucket: string, parameters: PutBucketParameters): Promise<void>{
+  putBucket(bucket: string, parameters?: PutBucketParameters): Promise<void>{
       return this.cosServiceModule.putBucket(
         this.serviceKey, 
         bucket, 
-        parameters.region, 
-        parameters.enableMAZ?parameters.enableMAZ.toString():parameters.enableMAZ,
-        parameters.cosacl, 
-        parameters.readAccount, 
-        parameters.writeAccount, 
-        parameters.readWriteAccount
+        parameters?.region, 
+        parameters?.enableMAZ != undefined ?parameters.enableMAZ.toString():parameters?.enableMAZ,
+        parameters?.cosacl, 
+        parameters?.readAccount, 
+        parameters?.writeAccount, 
+        parameters?.readWriteAccount
       )
   }
 

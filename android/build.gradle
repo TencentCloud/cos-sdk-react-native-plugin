@@ -64,7 +64,7 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native"
 
-  implementation 'com.qcloud.cos:cos-android:5.9.8'
+  implementation 'com.qcloud.cos:cos-android:5.9.9'
   implementation 'com.google.code.gson:gson:2.10.1'
 }
 

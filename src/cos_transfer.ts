@@ -72,7 +72,7 @@ export class CosTransferManger {
       progressCallbackKey,
       initMultipleUploadCallbackKey,
       parameters.stroageClass,
-      parameters.trafficLimit?parameters.trafficLimit.toString():parameters.trafficLimit,
+      parameters.trafficLimit != undefined ?parameters.trafficLimit.toString():parameters.trafficLimit,
       parameters.region
     )
 
@@ -96,7 +96,7 @@ export class CosTransferManger {
       stateCallbackKey,
       progressCallbackKey,
       parameters.versionId,
-      parameters.trafficLimit?parameters.trafficLimit.toString():parameters.trafficLimit,
+      parameters.trafficLimit != undefined ?parameters.trafficLimit.toString():parameters.trafficLimit,
       parameters.region
     )
 

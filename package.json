@@ -1,6 +1,6 @@
 {
   "name": "react-native-cos-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tencent COS XML SDK for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -49,7 +49,7 @@
   "bugs": {
     "url": "https://github.com/TencentCloud/cos-sdk-react-native-plugin/issues"
   },
-  "homepage": "https://github.com/TencentCloud/cos-sdk-react-native-plugin#readme",
+  "homepage": "https://cloud.tencent.com/document/product/436/86696",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

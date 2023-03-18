@@ -47,6 +47,7 @@ export class DownloadScreen extends React.Component<Props> {
       var downliadPath = `${DocumentDirectoryPath}/cos_download_${this.props.route.params.fileKey.split("/").pop()}`;
       let cosTransferManger: CosTransferManger = await this.getTransferManger();
       let successCallBack = (header?: object) => {
+        console.log(header);
         this.setState({
           resultString: `文件已下载到：${downliadPath}`,
           resultColor: "gray"

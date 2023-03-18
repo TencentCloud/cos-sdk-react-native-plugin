@@ -9,13 +9,20 @@ export type PutBucketParameters= {
     readWriteAccount?: string
 }
 
-export type GutBucketParameters= {
+export type GetBucketParameters= {
     region?: string, 
     prefix?: string, 
     delimiter?: string, 
     encodingType?: string, 
     marker?: string, 
     maxKeys?: number
+}
+
+export type PresignedUrlParameters= {
+    signValidTime?: number,
+    signHost?: boolean,
+    parameters?: object,
+    region?: string
 }
 
 export type UploadParameters= {
