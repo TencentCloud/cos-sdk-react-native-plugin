@@ -25,9 +25,9 @@ export class TestScreen extends React.Component<Props> {
                 title="存储桶head"
                 onPress={async () => {
                   // 存储桶名称，由bucketname-appid 组成，appid必须填入，可以在COS控制台查看存储桶名称。 https://console.cloud.tencent.com/cos5/bucket
-                  let bucket = "qqjjdd999-1253960454";
+                  let bucket = "mobile-ut-1253960454";
                   // 存储桶所在地域简称，例如广州地区是 ap-guangzhou
-                  let region = "ap-beijing";
+                  let region = "ap-guangzhou";
                   try {
                     let service = await getDefaultService();
                     let header = await service.headBucket(bucket,region);
@@ -229,9 +229,9 @@ export class TestScreen extends React.Component<Props> {
                 title="预签名链接"
                 onPress={async () => {
                   // 存储桶名称，由bucketname-appid 组成，appid必须填入，可以在COS控制台查看存储桶名称。 https://console.cloud.tencent.com/cos5/bucket
-                  let bucket = "mobile-ut-1253960454";
+                  let bucket = "000000-1253960454";
                   // 对象在存储桶中的位置标识符，即对象键
-                  let cosKey = "test.png";
+                  let cosKey = "1.txt";
 
                   try {
                     let service = await getDefaultService();
@@ -245,6 +245,14 @@ export class TestScreen extends React.Component<Props> {
                     // 失败后会抛异常 根据异常进行业务处理
                     console.log(e);
                   }
+                }}
+              />
+            </View>
+            <View style={styles.button}>
+              <Button
+                title="强制临时密钥失效"
+                onPress={async () => {
+                  await Cos.forceInvalidationCredential();
                 }}
               />
             </View>
@@ -264,7 +272,7 @@ const styles = StyleSheet.create({
   button: {
     width: "100%",
     height: 50,
-    marginTop: 10,
+    marginTop: 4,
   },
   textTitle: {
     fontSize: 18,

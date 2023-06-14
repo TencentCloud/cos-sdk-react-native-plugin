@@ -14,7 +14,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'BucketList'>;
 export class BucketListScreen extends React.Component<Props> {
   state = { isLoading: false, buckets: new Array<Bucket> };
   componentDidMount() {
-    this.loadData();
+    setTimeout(()=>this.loadData(), 2000);
   };
 
   UNSAFE_componentWillReceiveProps(nextProps: Props) { 

@@ -5,3 +5,10 @@ export type SessionQCloudCredentials = {
   startTime?: number;
   expiredTime: number
 }
+
+export type STSCredentialScope = {
+  action: string;
+  region: string;
+  bucket?: string;
+  prefix?: string;
+}

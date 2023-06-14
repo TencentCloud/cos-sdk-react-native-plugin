@@ -17,9 +17,21 @@
 NS_ASSUME_NONNULL_BEGIN
 
 @interface CosPluginSignatureProvider : NSObject<QCloudSignatureProvider, QCloudCredentailFenceQueueDelegate>
-- (void)setNewCredential:(QCloudCredential *)credential;
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)makeWithSecretId: (nullable NSString *)secretId
+                                   secretKey:(nullable NSString *)secretKey
+                                   isScopeLimitCredential:(bool)isScopeLimitCredential;
+
+- (QCloudThreadSafeMutableDictionary *)UrlRequstCache;
+- (QCloudThreadSafeMutableDictionary *)AuthentationContinueBlocksCache;
+
+- (void)setNewCredential:(QCloudCredential *)credential jsonifyScopes:(nullable NSString *)jsonifyScopes;
+- (void)forceInvalidationCredential;
 
 @property (nonatomic, strong, nonnull) QCloudCredentailFenceQueue* credentialFenceQueue;
+@property (nonatomic, copy, nullable) NSString* secretId;
+@property (nonatomic, copy, nullable) NSString* secretKey;
+@property (nonatomic) bool isScopeLimitCredential;
 
 @end
 

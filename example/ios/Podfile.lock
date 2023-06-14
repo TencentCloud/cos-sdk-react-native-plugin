@@ -78,13 +78,13 @@ PODS:
   - hermes-engine/Pre-built (0.71.0)
   - libevent (2.1.12)
   - OpenSSL-Universal (1.1.1100)
-  - QCloudCore (6.1.9):
-    - QCloudCore/Default (= 6.1.9)
-  - QCloudCore/Default (6.1.9)
-  - QCloudCOSXML (6.1.9):
-    - QCloudCOSXML/Default (= 6.1.9)
-  - QCloudCOSXML/Default (6.1.9):
-    - QCloudCore (= 6.1.9)
+  - QCloudCore (6.2.3):
+    - QCloudCore/Default (= 6.2.3)
+  - QCloudCore/Default (6.2.3)
+  - QCloudCOSXML (6.2.3):
+    - QCloudCOSXML/Default (= 6.2.3)
+  - QCloudCOSXML/Default (6.2.3):
+    - QCloudCore (= 6.2.3)
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -304,10 +304,10 @@ PODS:
   - React-jsinspector (0.71.0)
   - React-logger (0.71.0):
     - glog
-  - react-native-cos-sdk (1.0.1):
+  - react-native-cos-sdk (1.0.2):
     - QCloudCOSXML (>= 6.1.7)
     - React-Core
-  - react-native-document-picker (8.1.3):
+  - react-native-document-picker (9.0.1):
     - React-Core
   - react-native-progress-view (1.3.2):
     - React-Core
@@ -607,8 +607,8 @@ SPEC CHECKSUMS:
   hermes-engine: f6e715aa6c8bd38de6c13bc85e07b0a337edaa89
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
-  QCloudCore: 6f0e30b9d816ce4a3921d222461632cf761bb1c4
-  QCloudCOSXML: d52c1e6412df1e22d36603d2d91dd97773d0e075
+  QCloudCore: 448005f6c4515d869ee5b0e1faed5095f897f10a
+  QCloudCOSXML: f6b373f2de9282b3c0e1e0fcf8b42b5cf83f7827
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: dea3e4163184ea57c50288c15c32c1529265c58f
   RCTTypeSafety: a0834ab89159a346731e8aae55ad6e2cce61c327
@@ -623,8 +623,8 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 060dd495f1e2af3d87216f7ca8a94c55ec885b4f
   React-jsinspector: 5061fcbec93fd672183dfb39cc2f65e55a0835db
   React-logger: a6c0b3a807a8e81f6d7fea2e72660766f55daa50
-  react-native-cos-sdk: 59806c9f8443ed413fbff9387695bb993a863567
-  react-native-document-picker: 958e2bc82e128be69055be261aeac8d872c8d34c
+  react-native-cos-sdk: 0a3288eeb99da1bfb9e76eb7baa1c68206a9f286
+  react-native-document-picker: 2b8f18667caee73a96708a82b284a4f40b30a156
   react-native-progress-view: 4d3bbe6a099ba027b1fedb1548c2c87f74249b70
   react-native-safe-area-context: 99b24a0c5acd0d5dcac2b1a7f18c49ea317be99a
   React-perflogger: e5fc4149e9bbb972b8520277f3b23141faa47a36

@@ -15,10 +15,10 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.google.gson.Gson;
 import com.tencent.cos.xml.CosXmlBaseService;
 import com.tencent.cos.xml.CosXmlService;
@@ -66,6 +66,7 @@ import com.tencent.cos.xml.transfer.TransferManager;
 import com.tencent.qcloud.core.auth.QCloudCredentialProvider;
 import com.tencent.qcloud.core.auth.SessionQCloudCredentials;
 import com.tencent.qcloud.core.auth.ShortTimeCredentialProvider;
+import com.tencent.qcloud.core.task.TaskExecutors;
 
 import java.util.HashMap;
 import java.util.List;
@@ -129,8 +130,27 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void updateSessionCredential(ReadableMap credentials, final Promise promise) {
-    if (qCloudCredentialProvider != null && qCloudCredentialProvider instanceof BridgeCredentialProvider) {
+  public void initWithScopeLimitCredentialCallback(final Promise promise) {
+    qCloudCredentialProvider = new BridgeScopeLimitCredentialProvider(reactContext);
+    synchronized (credentialProviderLock) {
+      credentialProviderLock.notify();
+    }
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void forceInvalidationCredential(final Promise promise) {
+    if(qCloudCredentialProvider instanceof BridgeCredentialProvider){
+      BridgeCredentialProvider bridgeCredentialProvider = (BridgeCredentialProvider)qCloudCredentialProvider;
+      bridgeCredentialProvider.forceInvalidationCredential();
+    }
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void updateSessionCredential(ReadableMap credentials, @Nullable String stsScopesArrayJson, final Promise promise) {
+    if (qCloudCredentialProvider != null &&
+          (qCloudCredentialProvider instanceof BridgeCredentialProvider || qCloudCredentialProvider instanceof BridgeScopeLimitCredentialProvider)) {
       SessionQCloudCredentials sessionQCloudCredentials = null;
       if (credentials.hasKey("startTime")) {
         long startTime = (long) credentials.getDouble("startTime");
@@ -150,7 +170,11 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
           (long) credentials.getDouble("expiredTime")
         );
       }
-      ((BridgeCredentialProvider) qCloudCredentialProvider).setNewCredentials(sessionQCloudCredentials);
+      if(qCloudCredentialProvider instanceof BridgeCredentialProvider) {
+        ((BridgeCredentialProvider) qCloudCredentialProvider).setNewCredentials(sessionQCloudCredentials);
+      } else if(qCloudCredentialProvider instanceof BridgeScopeLimitCredentialProvider) {
+        ((BridgeScopeLimitCredentialProvider) qCloudCredentialProvider).setNewCredentials(sessionQCloudCredentials);
+      }
     }
     promise.resolve(null);
   }
@@ -329,13 +353,18 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       }
       presignedUrlRequest.setQueryParameters(parametersMap);
     }
-    try {
-      String urlWithSign = service.getPresignedURL(presignedUrlRequest);
-      promise.resolve(urlWithSign);
-    } catch (CosXmlClientException e) {
-      e.printStackTrace();
-      promise.reject(e);
+    if (region != null) {
+      presignedUrlRequest.setRegion(region);
     }
+    TaskExecutors.COMMAND_EXECUTOR.execute(() -> {
+      try {
+        String urlWithSign = service.getPresignedURL(presignedUrlRequest);
+        promise.resolve(urlWithSign);
+      } catch (CosXmlClientException e) {
+        e.printStackTrace();
+        promise.reject(e);
+      }
+    });
   }
 
   @ReactMethod

@@ -13,6 +13,10 @@ export const COS_EMITTER_STATE_CALLBACK: string = "COSEmitterStateCallback";
 // native to js: 回调分块上传初始化
 export const COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK: string = "COSEmitterInitMultipleUploadCallback";
 
+export type UpdateSessionCredentialEvent = {
+    stsScopesArrayJson?: string;
+}
+
 export type TransferResultSuccessEvent = {
     transferKey: string;
     callbackKey: string;

@@ -1,9 +1,10 @@
 import { NativeModules, Platform, NativeEventEmitter } from 'react-native';
 import { CosService } from './cos_service';
 import { CosTransferManger } from './cos_transfer';
+import { ScopeLimitCredentialsProvider } from './credentials/scope_credentials';
 import type { CosXmlServiceConfig, TransferConfig } from './data_model/config';
-import { COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent } from './data_model/events';
-import type { SessionQCloudCredentials } from './data_model/credentials';
+import { COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent, UpdateSessionCredentialEvent } from './data_model/events';
+import type { SessionQCloudCredentials, STSCredentialScope } from './data_model/credentials';
 import { IllegalArgumentError } from './data_model/errors';
 
 const LINKING_ERROR =
@@ -43,10 +44,12 @@ class Cos {
 
   private cosServices: Map<string, CosService>;
   private cosTransfers: Map<string, CosTransferManger>;
+  private scopeLimitCredentialsProvider: ScopeLimitCredentialsProvider;
 
   constructor() {
     this.cosServices = new Map()
     this.cosTransfers = new Map()
+    this.scopeLimitCredentialsProvider = new ScopeLimitCredentialsProvider();
     
     if(Platform.OS === 'ios'){
       this.emitter = new NativeEventEmitter(CosEventEmitter);
@@ -83,18 +86,44 @@ class Cos {
     }
   }
 
-  initWithSessionCredentialCallback(callback: () => Promise<SessionQCloudCredentials>): Promise<void> | undefined {
+  initWithSessionCredentialCallback(callback: () => Promise<SessionQCloudCredentials | null>): Promise<void> | undefined {
     if (!this.initialized) {
       this.initialized = true
       this.emitter.addListener(COS_EMITTER_UPDATE_SESSION_CREDENTIAL, async () => {
         const credential = await callback()
-        QCloudCosReactNative.updateSessionCredential(credential)
+        if(credential){
+          QCloudCosReactNative.updateSessionCredential(credential, null)
+        }
       });
       return QCloudCosReactNative.initWithSessionCredentialCallback()
     } else {
       console.log("COS Service has been inited before.");
       return undefined;
     }
+  }
+
+  initWithScopeLimitCredentialCallback(callback: (stsScopesArray:Array<STSCredentialScope>) => Promise<SessionQCloudCredentials | null>): Promise<void> | undefined {
+    if (!this.initialized) {
+      this.initialized = true
+      this.emitter.addListener(COS_EMITTER_UPDATE_SESSION_CREDENTIAL, async (event: UpdateSessionCredentialEvent) => {
+        console.log(event.stsScopesArrayJson);
+        if(event.stsScopesArrayJson){
+          const credential = await this.scopeLimitCredentialsProvider.fetchScopeLimitCredentials(event.stsScopesArrayJson, callback);
+          if(credential){
+            QCloudCosReactNative.updateSessionCredential(credential, event.stsScopesArrayJson)
+          }
+        }
+      });
+      return QCloudCosReactNative.initWithScopeLimitCredentialCallback()
+    } else {
+      console.log("COS Service has been inited before.");
+      return undefined;
+    }
+  }
+
+  forceInvalidationCredential(): Promise<void>{
+    this.scopeLimitCredentialsProvider.forceInvalidationScopeCredentials();
+    return QCloudCosReactNative.forceInvalidationCredential();
   }
 
   setCloseBeacon(isCloseBeacon: boolean): Promise<void>{

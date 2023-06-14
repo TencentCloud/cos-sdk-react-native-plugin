@@ -6,11 +6,15 @@
 export const COS_APP_ID: string = 'XXXXXXXX'  
 // 是否使用临时密钥请求 COS
 export const USE_SESSION_TOKEN_CREDENTIAL: boolean = true 
+// 是否使用范围限制的临时密钥请求 COS
+export const USE_SCOPE_LIMIT_TOKEN_CREDENTIAL: boolean = false;
 // 腾讯云永久密钥 SecretID
 export const COS_SECRET_ID: string = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  
 // 腾讯云永久密钥 SecretKey
 export const COS_SECRET_KEY: string = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  
 // STS 临时密钥服务器地址
 export const STS_URL: string = 'http://stsservice.com/sts' 
+// STS 范围限制的临时密钥服务器地址
+export const STS_SCOPE_LIMIT_URL: string = "https://stsservice.com/sts/scope";
 // 存储桶所在地域
 export const PERSIST_BUCKET_REGION: string = 'ap-guangzhou'

@@ -6,6 +6,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @class CosXmlClientException;
 @class CosXmlServiceException;
+@class STSCredentialScope;
 @class Owner;
 @class Bucket;
 @class ListAllMyBuckets;
@@ -41,6 +42,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, nullable) NSString * errorMessage;
 @property(nonatomic, copy, nullable) NSString * serviceName;
 @property(nonatomic, copy, nullable) NSString * details;
+@end
+
+@interface STSCredentialScope : NSObject
+/// `init` unavailable to enforce nonnull fields, see the `make` class method.
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)makeWithAction:(NSString *)action
+    region:(NSString *)region
+    bucket:(nullable NSString *)bucket
+    prefix:(nullable NSString *)prefix;
+@property(nonatomic, copy) NSString * action;
+@property(nonatomic, copy) NSString * region;
+@property(nonatomic, copy, nullable) NSString * bucket;
+@property(nonatomic, copy, nullable) NSString * prefix;
 @end
 
 @interface Owner : NSObject

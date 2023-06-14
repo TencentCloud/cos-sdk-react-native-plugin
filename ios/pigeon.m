@@ -25,6 +25,11 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
 + (nullable CosXmlServiceException *)nullableFromMap:(NSDictionary *)dict;
 - (NSDictionary *)toMap;
 @end
+@interface STSCredentialScope ()
++ (STSCredentialScope *)fromList:(NSArray *)list;
++ (nullable STSCredentialScope *)nullableFromList:(NSArray *)list;
+- (NSArray *)toList;
+@end
 @interface Owner ()
 + (Owner *)fromMap:(NSDictionary *)dict;
 + (nullable Owner *)nullableFromMap:(NSDictionary *)dict;
@@ -125,6 +130,39 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
     @"serviceName" : (self.serviceName ?: [NSNull null]),
     @"details" : (self.details ?: [NSNull null]),
   };
+}
+@end
+
+@implementation STSCredentialScope
++ (instancetype)makeWithAction:(NSString *)action
+    region:(NSString *)region
+    bucket:(nullable NSString *)bucket
+    prefix:(nullable NSString *)prefix {
+  STSCredentialScope* pigeonResult = [[STSCredentialScope alloc] init];
+  pigeonResult.action = action;
+  pigeonResult.region = region;
+  pigeonResult.bucket = bucket;
+  pigeonResult.prefix = prefix;
+  return pigeonResult;
+}
++ (STSCredentialScope *)fromList:(NSArray *)list {
+  STSCredentialScope *pigeonResult = [[STSCredentialScope alloc] init];
+  pigeonResult.action = GetNullableObjectAtIndex(list, 0);
+  NSAssert(pigeonResult.action != nil, @"");
+  pigeonResult.region = GetNullableObjectAtIndex(list, 1);
+  NSAssert(pigeonResult.region != nil, @"");
+  pigeonResult.bucket = GetNullableObjectAtIndex(list, 2);
+  pigeonResult.prefix = GetNullableObjectAtIndex(list, 3);
+  return pigeonResult;
+}
++ (nullable STSCredentialScope *)nullableFromList:(NSArray *)list { return (list) ? [STSCredentialScope fromList:list] : nil; }
+- (NSArray *)toList {
+  return @[
+    (self.action ?: [NSNull null]),
+    (self.region ?: [NSNull null]),
+    (self.bucket ?: [NSNull null]),
+    (self.prefix ?: [NSNull null]),
+  ];
 }
 @end
 

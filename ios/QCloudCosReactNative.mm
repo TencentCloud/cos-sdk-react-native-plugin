@@ -95,22 +95,29 @@ static void *kQCloudUploadRequestResmeData = &kQCloudUploadRequestResmeData;
 
 @end
 
+@interface QCloudCosReactNative ()
+{
+    CosPluginSignatureProvider* signatureProvider;
+    NSString * permanentSecretId;
+    NSString * permanentSecretKey;
+    bool isScopeLimitCredential;
+}
+@end
+
 @implementation QCloudCosReactNative
+NSString * const QCloudCOS_DEFAULT_KEY = @"";
+NSString * const QCloudCOS_BRIDGE = @"ReactNative";
+NSString * const QCloudCOS_UA_FLUTTER_PLUGIN = @"ReactNativePlugin";
+
+NSString * const QCloudCOS_STATE_WAITING = @"WAITING";
+NSString * const QCloudCOS_STATE_IN_PROGRESS = @"IN_PROGRESS";
+NSString * const QCloudCOS_STATE_PAUSED = @"PAUSED";
+NSString * const QCloudCOS_STATE_RESUMED_WAITING = @"RESUMED_WAITING";
+NSString * const QCloudCOS_STATE_COMPLETED = @"COMPLETED";
+NSString * const QCloudCOS_STATE_FAILED = @"FAILED";
+NSString * const QCloudCOS_STATE_CANCELED = @"CANCELED";
+
 RCT_EXPORT_MODULE()
-
-NSString * const DEFAULT_KEY = @"";
-NSString * const BRIDGE = @"ReactNative";
-NSString * const UA_FLUTTER_PLUGIN = @"ReactNativePlugin";
-
-NSString * const STATE_WAITING = @"WAITING";
-NSString * const STATE_IN_PROGRESS = @"IN_PROGRESS";
-NSString * const STATE_PAUSED = @"PAUSED";
-NSString * const STATE_RESUMED_WAITING = @"RESUMED_WAITING";
-NSString * const STATE_COMPLETED = @"COMPLETED";
-NSString * const STATE_FAILED = @"FAILED";
-NSString * const STATE_CANCELED = @"CANCELED";
-
-CosPluginSignatureProvider * cosPluginSignatureProvider = [CosPluginSignatureProvider new];
 
 QCloudThreadSafeMutableDictionary *QCloudCOSTransferConfigCache() {
     static QCloudThreadSafeMutableDictionary *CloudCOSTransferConfig = nil;
@@ -142,7 +149,7 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
 
 -(nonnull QCloudServiceConfiguration *)buildConfiguration:(nonnull NSDictionary *)config{
     QCloudServiceConfiguration* configuration = [QCloudServiceConfiguration new];
-    configuration.bridge = BRIDGE;
+    configuration.bridge = QCloudCOS_BRIDGE;
     QCloudCOSXMLEndPoint* endpoint;
     id host = [config objectForKey:@"host"];
     if(host){
@@ -162,7 +169,7 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
     if(userAgent && ![userAgent isEqualToString:@""]){
         configuration.userAgentProductKey = userAgent;
     } else {
-        configuration.userAgentProductKey = UA_FLUTTER_PLUGIN;
+        configuration.userAgentProductKey = QCloudCOS_UA_FLUTTER_PLUGIN;
     }
     id isHttps = [config objectForKey:@"isHttps"];
     if(isHttps){
@@ -175,12 +182,12 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
     // todo iOS不支持：HostFormat、SocketTimeout、port、IsDebuggable、SignInUrl、DnsCache、
     configuration.endpoint = endpoint;
 
-    configuration.signatureProvider = cosPluginSignatureProvider;
+    configuration.signatureProvider = signatureProvider;
     return configuration;
 }
 
 -(QCloudCOSXMLService *)getQCloudCOSXMLService:(nonnull NSString *)key {
-    if([DEFAULT_KEY isEqual:key]){
+    if([QCloudCOS_DEFAULT_KEY isEqual:key]){
         return [QCloudCOSXMLService defaultCOSXML];
     } else {
         return [QCloudCOSXMLService cosxmlServiceForKey:key];
@@ -188,7 +195,7 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
 }
 
 -(QCloudCOSTransferMangerService *)getQCloudCOSTransferMangerService:(nonnull NSString *)key {
-    if([DEFAULT_KEY isEqual:key]){
+    if([QCloudCOS_DEFAULT_KEY isEqual:key]){
         return [QCloudCOSTransferMangerService defaultCOSTransferManager];
     } else {
         return [QCloudCOSTransferMangerService costransfermangerServiceForKey:key];
@@ -199,26 +206,40 @@ RCT_REMAP_METHOD(initWithPlainSecret,
                  initWithPlainSecretSecretId:(NSString *)secretId secretKey:(NSString *)secretKey
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject){
-    QCloudCredential* credential = [QCloudCredential new];
-    // 永久密钥 secretID
-    // sercret_id替换为用户的 SecretId，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
-    credential.secretID = secretId;
-    // 永久密钥 SecretKey
-    // sercret_key替换为用户的 SecretKey，登录访问管理控制台查看密钥，https://console.cloud.tencent.com/cam/capi
-    credential.secretKey = secretKey;
-    [cosPluginSignatureProvider setNewCredential:credential];
-    
+    permanentSecretId = secretId;
+    permanentSecretKey = secretKey;
+    signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(initWithSessionCredentialCallback,
                  initWithSessionCredentialCallbackWithResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject){
+    isScopeLimitCredential = false;
+    signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
+    resolve(nil);
+}
+
+RCT_REMAP_METHOD(initWithScopeLimitCredentialCallback,
+                 initWithScopeLimitCredentialCallbackWithResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject){
+    isScopeLimitCredential = true;
+    signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
+    resolve(nil);
+}
+
+RCT_REMAP_METHOD(forceInvalidationCredential,
+                 forceInvalidationCredentialWithResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject){
+    if(signatureProvider){
+        [signatureProvider forceInvalidationCredential];
+    }
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(updateSessionCredential,
                  updateSessionCredential:(nonnull NSDictionary *)credential
+                 stsScopesKey:(nullable NSString *)jsonifyScopes
                  withResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject)
 {
@@ -244,7 +265,7 @@ RCT_REMAP_METHOD(updateSessionCredential,
         credentialNew.startDate = [NSDate dateWithTimeIntervalSince1970: [startTime doubleValue]]; // 单位是秒
     }
     
-    [cosPluginSignatureProvider setNewCredential: credentialNew];
+    [signatureProvider setNewCredential: credentialNew jsonifyScopes:jsonifyScopes];
     
     resolve(nil);
 }
@@ -263,7 +284,7 @@ RCT_REMAP_METHOD(registerDefaultTransferManger,
                  withRejecter:(RCTPromiseRejectBlock)reject){
     [QCloudCOSTransferMangerService registerDefaultCOSTransferMangerWithConfiguration: [self buildConfiguration: config]];
     if(transferConfig){
-        [QCloudCOSTransferConfigCache() setObject:transferConfig forKey:DEFAULT_KEY];
+        [QCloudCOSTransferConfigCache() setObject:transferConfig forKey:QCloudCOS_DEFAULT_KEY];
     }
     resolve(nil);
 }
@@ -793,9 +814,9 @@ RCT_REMAP_METHOD(download,
         }
         
         if(error == nil){
-            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_COMPLETED];
+            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_COMPLETED];
         } else {
-            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_FAILED];
+            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_FAILED];
         }
         
         if(resultCallbackKey){
@@ -829,7 +850,7 @@ RCT_REMAP_METHOD(download,
     [getObjectRequest setDownProcessBlock:^(int64_t bytesDownload,
                                             int64_t totalBytesDownload,
                                             int64_t totalBytesExpectedToDownload) {
-        [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_IN_PROGRESS];
+        [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_IN_PROGRESS];
         if(progressCallbackKey){
             [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                               userInfo:@{@"eventName":COS_EMITTER_PROGRESS_CALLBACK,
@@ -843,7 +864,7 @@ RCT_REMAP_METHOD(download,
     }];
     
     [transferManger DownloadObject:getObjectRequest];
-    [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_WAITING];
+    [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_WAITING];
     
     [QCloudCOSTaskCache() setObject:getObjectRequest forKey:taskKey];
     return taskKey;
@@ -863,7 +884,7 @@ RCT_REMAP_METHOD(pause,
         }
         NSError *error;
         put.resmeData = [put cancelByProductingResumeData:&error];
-        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:STATE_PAUSED];
+        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:QCloudCOS_STATE_PAUSED];
         resolve(nil);
     } else if ([taskId hasPrefix:@"download-"]){
         QCloudCOSXMLDownloadObjectRequest* request = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -873,7 +894,7 @@ RCT_REMAP_METHOD(pause,
             return;
         }
         [request cancel];
-        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:STATE_PAUSED];
+        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:QCloudCOS_STATE_PAUSED];
         resolve(nil);
     }
 }
@@ -904,7 +925,7 @@ RCT_REMAP_METHOD(resume,
                            trafficLimit:[NSString stringWithFormat: @"%ld", [put trafficLimit]]
                                  region:[put regionName]
                         taskKey:taskId];
-        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:STATE_RESUMED_WAITING];
+        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:QCloudCOS_STATE_RESUMED_WAITING];
         resolve(nil);
     } else if ([taskId hasPrefix:@"download-"]){
         QCloudCOSXMLDownloadObjectRequest* request = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -924,7 +945,7 @@ RCT_REMAP_METHOD(resume,
                              trafficLimit:[NSString stringWithFormat: @"%ld", [request trafficLimit]]
                                    region:[request regionName]
                           taskKey:taskId];
-        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:STATE_RESUMED_WAITING];
+        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:QCloudCOS_STATE_RESUMED_WAITING];
         resolve(nil);
     }
 }
@@ -942,7 +963,7 @@ RCT_REMAP_METHOD(cancel,
             return;
         }
         [put abort:^(id outputObject, NSError *error) {}];
-        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:STATE_CANCELED];
+        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:QCloudCOS_STATE_CANCELED];
         [QCloudCOSTaskStateCache() removeObject:[NSString stringWithFormat: @"%@-%@", transferKey, [put stateCallbackKey]]];
     } else if ([taskId hasPrefix:@"download-"]){
         QCloudCOSXMLDownloadObjectRequest* request = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -952,7 +973,7 @@ RCT_REMAP_METHOD(cancel,
             return;
         }
         [request cancel];
-        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:STATE_CANCELED];
+        [self stateCallback:transferKey stateCallbackKey:[request stateCallbackKey] state:QCloudCOS_STATE_CANCELED];
         [QCloudCOSTaskStateCache() removeObject:[NSString stringWithFormat: @"%@-%@", transferKey, [request stateCallbackKey]]];
     }
     [QCloudCOSTaskCache() removeObject:taskId];
@@ -1042,7 +1063,7 @@ RCT_REMAP_METHOD(upload,
     [put setSendProcessBlock:^(int64_t bytesSent,
                                int64_t totalBytesSent,
                                int64_t totalBytesExpectedToSend) {
-        [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_IN_PROGRESS];
+        [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_IN_PROGRESS];
         if(progressCallbackKey){
             [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                               userInfo:@{@"eventName":COS_EMITTER_PROGRESS_CALLBACK,
@@ -1064,9 +1085,9 @@ RCT_REMAP_METHOD(upload,
         }
         
         if(error == nil){
-            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_COMPLETED];
+            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_COMPLETED];
         } else {
-            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_FAILED];
+            [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_FAILED];
         }
         
         if(resultCallbackKey){
@@ -1115,7 +1136,7 @@ RCT_REMAP_METHOD(upload,
         }
     }];
     [transferManger UploadObject:put];
-    [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:STATE_WAITING];
+    [self stateCallback:transferKey stateCallbackKey:stateCallbackKey state:QCloudCOS_STATE_WAITING];
     
     [QCloudCOSTaskCache() setObject:put forKey:taskKey];
     return taskKey;
