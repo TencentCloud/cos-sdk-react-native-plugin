@@ -916,7 +916,7 @@ RCT_REMAP_METHOD(resume,
                          bucket:[put bucket]
                         cosPath:[put object]
                        fileUri:nil
-                       uploadId:[put uploadid]
+                       uploadId:[put valueForKey:@"uploadId"]
               resultCallbackKey:[put resultCallbackKey]
                stateCallbackKey:[put stateCallbackKey]
             progressCallbackKey:[put progressCallbackKey]
@@ -1012,7 +1012,7 @@ RCT_REMAP_METHOD(upload,
             put.regionName = region;
         }
         if(uploadId){
-            put.uploadid = uploadId;
+            [put setValue:uploadId forKey:@"uploadId"];
         }
         if(stroageClass){
             put.storageClass = QCloudCOSStorageClassDumpFromString(stroageClass);
