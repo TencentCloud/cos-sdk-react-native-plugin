@@ -52,29 +52,13 @@ android {
 
 }
 
-// 定义一个方法, 用于获取当前moudle的dir
-def getCurrentProjectDir() {
-  String result = ""
-  rootProject.allprojects { project ->
-    if (project.properties.get("identityPath").toString() == ":react-native-cos-sdk") { // 这里是react-native的约定, 插件的module名是插件名, :是gradle的约定. project前加:
-      result = project.properties.get("projectDir").toString()
-    }
-  }
-  return result
-}
-
 rootProject.allprojects {
-  // 这个闭包是循环所有project, 我们让这个仓库可以被所有module找到
-  def dir = getCurrentProjectDir()
   repositories {
     mavenCentral()
     google()
-    maven { // 添加这个指向本地的仓库目录
-      url "$dir/repo"
-    }
+    flatDir { dirs project(":react-native-cos-sdk").file("libs") }
   }
 }
-
 
 dependencies {
   // For < 0.71, this will be from the local maven repo
@@ -82,8 +66,11 @@ dependencies {
   //noinspection GradleDynamicVersion
   implementation "com.facebook.react:react-native"
 
-  implementation 'com.qcloud.cos:qcloud-foundation:1.5.55'
-  implementation 'com.qcloud.cos:cos-android-nobeacon:5.9.13'
+  implementation 'com.squareup.okhttp3:okhttp:3.12.6'
+  implementation 'com.squareup.okio:okio:1.15.0'
+  implementation 'com.parse.bolts:bolts-tasks:1.4.0'
+  implementation(name: 'qcloud-foundation-1.5.55', ext: 'aar')
+  implementation(name: 'cos-android-nobeacon-5.9.13', ext: 'aar')
   implementation 'com.google.code.gson:gson:2.10.1'
 }
 

@@ -78,13 +78,13 @@ PODS:
   - hermes-engine/Pre-built (0.71.0)
   - libevent (2.1.12)
   - OpenSSL-Universal (1.1.1100)
-  - QCloudCore (6.2.3):
-    - QCloudCore/Default (= 6.2.3)
-  - QCloudCore/Default (6.2.3)
-  - QCloudCOSXML (6.2.3):
-    - QCloudCOSXML/Default (= 6.2.3)
-  - QCloudCOSXML/Default (6.2.3):
-    - QCloudCore (= 6.2.3)
+  - QCloudCore (6.2.5):
+    - QCloudCore/Default (= 6.2.5)
+  - QCloudCore/Default (6.2.5)
+  - QCloudCOSXML (6.2.5):
+    - QCloudCOSXML/Default (= 6.2.5)
+  - QCloudCOSXML/Default (6.2.5):
+    - QCloudCore (= 6.2.5)
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -304,7 +304,7 @@ PODS:
   - React-jsinspector (0.71.0)
   - React-logger (0.71.0):
     - glog
-  - react-native-cos-sdk (1.0.2):
+  - react-native-cos-sdk (1.0.5):
     - QCloudCOSXML (>= 6.1.7)
     - React-Core
   - react-native-document-picker (9.0.1):
@@ -607,8 +607,8 @@ SPEC CHECKSUMS:
   hermes-engine: f6e715aa6c8bd38de6c13bc85e07b0a337edaa89
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
-  QCloudCore: 448005f6c4515d869ee5b0e1faed5095f897f10a
-  QCloudCOSXML: f6b373f2de9282b3c0e1e0fcf8b42b5cf83f7827
+  QCloudCore: 81d649400ba861fc8e182d135b567d8eefe09e65
+  QCloudCOSXML: 4cab311d08a8df863db977d397e67f4dac27a39b
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: dea3e4163184ea57c50288c15c32c1529265c58f
   RCTTypeSafety: a0834ab89159a346731e8aae55ad6e2cce61c327
@@ -623,7 +623,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 060dd495f1e2af3d87216f7ca8a94c55ec885b4f
   React-jsinspector: 5061fcbec93fd672183dfb39cc2f65e55a0835db
   React-logger: a6c0b3a807a8e81f6d7fea2e72660766f55daa50
-  react-native-cos-sdk: 0a3288eeb99da1bfb9e76eb7baa1c68206a9f286
+  react-native-cos-sdk: 5168c4486b3bb2b899bdddb7b9133c24f4e123aa
   react-native-document-picker: 2b8f18667caee73a96708a82b284a4f40b30a156
   react-native-progress-view: 4d3bbe6a099ba027b1fedb1548c2c87f74249b70
   react-native-safe-area-context: 99b24a0c5acd0d5dcac2b1a7f18c49ea317be99a
@@ -650,4 +650,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: 4e5b4bdbc0f77e8ade18b0b995b08f99dc26e328
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1
