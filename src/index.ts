@@ -3,9 +3,10 @@ import { CosService } from './cos_service';
 import { CosTransferManger } from './cos_transfer';
 import { ScopeLimitCredentialsProvider } from './credentials/scope_credentials';
 import type { CosXmlServiceConfig, TransferConfig } from './data_model/config';
-import { COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent, UpdateSessionCredentialEvent } from './data_model/events';
+import { COS_EMITTER_DNS_FETCH, COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent, UpdateSessionCredentialEvent } from './data_model/events';
 import type { SessionQCloudCredentials, STSCredentialScope } from './data_model/credentials';
 import { IllegalArgumentError } from './data_model/errors';
+import type { DnsMapParameters } from './data_model/parameters';
 
 const LINKING_ERROR =
   `The package 'react-native-cos-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -119,6 +120,21 @@ class Cos {
       console.log("COS Service has been inited before.");
       return undefined;
     }
+  }
+
+  /// 初始化自定义 DNS 解析Map
+  initCustomerDNS(dnsMap: Array<DnsMapParameters>): Promise<void> | undefined {
+    return QCloudCosReactNative.initCustomerDNS(dnsMap);
+  }
+
+  /// 初始化自定义 DNS 解析器
+  initCustomerDNSFetch(callback: (domain: string) => Promise<Array<string> | null>): Promise<void> | undefined {
+    this.emitter.removeAllListeners(COS_EMITTER_DNS_FETCH);
+    this.emitter.addListener(COS_EMITTER_DNS_FETCH, async (domain: string) => {
+      const ips = await callback(domain)
+      QCloudCosReactNative.setDNSFetchIps(domain, ips)
+    });
+    return QCloudCosReactNative.initCustomerDNSFetch();
   }
 
   forceInvalidationCredential(): Promise<void>{

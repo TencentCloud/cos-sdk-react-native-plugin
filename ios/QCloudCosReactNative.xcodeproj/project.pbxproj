@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5E555C0D2413F4C50049A1A2 /* QCloudCosReactNative.m in Sources */ = {isa = PBXBuildFile; fileRef = B3E7B5891CC2AC0600A0062D /* QCloudCosReactNative.m */; };
+		D29775072AA1DA0D007CDBF0 /* QCloudCosReactNative.mm in Sources */ = {isa = PBXBuildFile; fileRef = D29775012AA1D40B007CDBF0 /* QCloudCosReactNative.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,7 +25,13 @@
 /* Begin PBXFileReference section */
 		134814201AA4EA6300B7C361 /* libQCloudCosReactNative.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libQCloudCosReactNative.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3E7B5881CC2AC0600A0062D /* QCloudCosReactNative.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = QCloudCosReactNative.h; sourceTree = "<group>"; };
-		B3E7B5891CC2AC0600A0062D /* QCloudCosReactNative.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = QCloudCosReactNative.m; sourceTree = "<group>"; };
+		D29775002AA1D40B007CDBF0 /* CosPluginSignatureProvider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CosPluginSignatureProvider.h; sourceTree = "<group>"; };
+		D29775012AA1D40B007CDBF0 /* QCloudCosReactNative.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = QCloudCosReactNative.mm; sourceTree = "<group>"; };
+		D29775022AA1D40B007CDBF0 /* CosPluginSignatureProvider.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CosPluginSignatureProvider.m; sourceTree = "<group>"; };
+		D29775032AA1D40B007CDBF0 /* CosEventEmitter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CosEventEmitter.h; sourceTree = "<group>"; };
+		D29775042AA1D40B007CDBF0 /* pigeon.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = pigeon.h; sourceTree = "<group>"; };
+		D29775052AA1D40B007CDBF0 /* pigeon.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = pigeon.m; sourceTree = "<group>"; };
+		D29775062AA1D40B007CDBF0 /* CosEventEmitter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CosEventEmitter.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,8 +56,14 @@
 		58B511D21A9E6C8500147676 = {
 			isa = PBXGroup;
 			children = (
+				D29775032AA1D40B007CDBF0 /* CosEventEmitter.h */,
+				D29775062AA1D40B007CDBF0 /* CosEventEmitter.m */,
+				D29775002AA1D40B007CDBF0 /* CosPluginSignatureProvider.h */,
+				D29775022AA1D40B007CDBF0 /* CosPluginSignatureProvider.m */,
+				D29775042AA1D40B007CDBF0 /* pigeon.h */,
+				D29775052AA1D40B007CDBF0 /* pigeon.m */,
+				D29775012AA1D40B007CDBF0 /* QCloudCosReactNative.mm */,
 				B3E7B5881CC2AC0600A0062D /* QCloudCosReactNative.h */,
-				B3E7B5891CC2AC0600A0062D /* QCloudCosReactNative.m */,
 				134814211AA4EA7D00B7C361 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -113,7 +125,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B3E7B58A1CC2AC0600A0062D /* QCloudCosReactNative.m in Sources */,
+				D29775072AA1DA0D007CDBF0 /* QCloudCosReactNative.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

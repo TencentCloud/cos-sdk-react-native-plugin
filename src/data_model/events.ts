@@ -2,6 +2,8 @@ import type { CosXmlClientError, CosXmlServiceError } from "./errors";
 
 // native to js: 更新临时秘钥
 export const COS_EMITTER_UPDATE_SESSION_CREDENTIAL: string = "COSEmitterUpdateSessionCredential"
+// native to js: 获取domain对应的ip数组
+export const COS_EMITTER_DNS_FETCH: string = "COSEmitterDnsFetch"
 // native to js: 回调结果成功
 export const COS_EMITTER_RESULT_SUCCESS_CALLBACK: string = "COSEmitterResultSuccessCallback";
 // native to js: 回调结果失败

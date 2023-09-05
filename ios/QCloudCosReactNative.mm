@@ -5,7 +5,8 @@
 #import <objc/runtime.h>
 #import "pigeon.h"
 #import "CosEventEmitter.h"
-
+#import "QCloudHttpDNS.h"
+#import "QCloudThreadSafeMutableDictionary.h"
 static void *kQCloudDownloadRequestResultCallbackKey = &kQCloudDownloadRequestResultCallbackKey;
 static void *kQCloudDownloadRequestProgressCallbackKey = &kQCloudDownloadRequestProgressCallbackKey;
 static void *kQCloudDownloadRequestStateCallbackKey = &kQCloudDownloadRequestStateCallbackKey;
@@ -95,13 +96,17 @@ static void *kQCloudUploadRequestResmeData = &kQCloudUploadRequestResmeData;
 
 @end
 
-@interface QCloudCosReactNative ()
+@interface QCloudCosReactNative ()<QCloudHTTPDNSProtocol>
 {
     CosPluginSignatureProvider* signatureProvider;
     NSString * permanentSecretId;
     NSString * permanentSecretKey;
     bool isScopeLimitCredential;
+    bool initDnsFetch;
+    dispatch_semaphore_t semp;
 }
+
+@property(nonatomic,strong) NSMutableDictionary * dnsMap;
 @end
 
 @implementation QCloudCosReactNative
@@ -118,6 +123,13 @@ NSString * const QCloudCOS_STATE_FAILED = @"FAILED";
 NSString * const QCloudCOS_STATE_CANCELED = @"CANCELED";
 
 RCT_EXPORT_MODULE()
+
+-(NSMutableDictionary *)dnsMap{
+    if (!_dnsMap) {
+        _dnsMap = [NSMutableDictionary new];
+    }
+    return _dnsMap;
+}
 
 QCloudThreadSafeMutableDictionary *QCloudCOSTransferConfigCache() {
     static QCloudThreadSafeMutableDictionary *CloudCOSTransferConfig = nil;
@@ -228,6 +240,66 @@ RCT_REMAP_METHOD(initWithScopeLimitCredentialCallback,
     resolve(nil);
 }
 
+RCT_REMAP_METHOD(initCustomerDNS,
+                 initCustomerDNSWithDns:(NSArray *) dnsArray
+                 withResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject){
+    
+    [dnsArray enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSArray *ipsArray = [obj objectForKey:@"ips"];
+        NSString *domain = [obj objectForKey:@"domain"];
+        [ipsArray enumerateObjectsUsingBlock:^(NSString * _Nonnull ip, NSUInteger idx1, BOOL * _Nonnull stop1) {
+            [[QCloudHttpDNS shareDNS] setIp:ip forDomain:domain];
+        }];
+        QCloudThreadSafeMutableDictionary * ipHostMap = [[QCloudHttpDNS shareDNS] valueForKey:@"_ipHostMap"];
+        if(ipsArray && domain){
+            [ipHostMap setObject:ipsArray forKey:domain];
+        }
+    }];
+    resolve(nil);
+}
+
+RCT_REMAP_METHOD(initCustomerDNSFetch,
+                 initCustomerDNSFetchWithResolver:(RCTPromiseResolveBlock)resolve
+                 withRejecter:(RCTPromiseRejectBlock)reject){
+    [QCloudHttpDNS shareDNS].delegate = self;
+    initDnsFetch = YES;
+    resolve(nil);
+}
+
+
+- (NSString *)resolveDomain:(NSString *)domain{
+    __block NSString * ip;
+    if (semp != nil) {
+        dispatch_semaphore_signal(semp);
+        semp = nil;
+    }
+    semp = dispatch_semaphore_create(0);
+    [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
+                                                      userInfo:@{@"eventName":COS_EMITTER_DNS_FETCH,
+                                                                 @"eventBody":domain}];
+    dispatch_semaphore_wait(semp, dispatch_time(DISPATCH_TIME_NOW, 15 * NSEC_PER_SEC));
+    if ([self.dnsMap objectForKey:domain]) {
+        NSArray * ips = [self.dnsMap objectForKey:domain];
+        if ([ips isKindOfClass:NSArray.class]) {
+            ip = ips.lastObject;
+        }
+    }
+    return ip;
+}
+
+RCT_REMAP_METHOD(setDNSFetchIps, setDNSFetchIpsDomain:(NSString *)domain ips:(NSArray *)ips promise:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
+{
+    if(ips && domain){
+        [self.dnsMap setObject:ips forKey:domain];
+        QCloudThreadSafeMutableDictionary * ipHostMap = [[QCloudHttpDNS shareDNS] valueForKey:@"_ipHostMap"];
+        [ipHostMap setObject:ips forKey:domain];
+    }
+    dispatch_semaphore_signal(semp);
+    semp = nil;
+    resolve(nil);
+}
+
 RCT_REMAP_METHOD(forceInvalidationCredential,
                  forceInvalidationCredentialWithResolver:(RCTPromiseResolveBlock)resolve
                  withRejecter:(RCTPromiseRejectBlock)reject){
@@ -286,6 +358,7 @@ RCT_REMAP_METHOD(registerDefaultTransferManger,
     if(transferConfig){
         [QCloudCOSTransferConfigCache() setObject:transferConfig forKey:QCloudCOS_DEFAULT_KEY];
     }
+
     resolve(nil);
 }
 

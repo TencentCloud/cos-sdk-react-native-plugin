@@ -18,4 +18,6 @@ extern NSString * const COS_EMITTER_PROGRESS_CALLBACK;
 extern NSString * const COS_EMITTER_STATE_CALLBACK;
 // native to js: 回调分块上传初始化
 extern NSString * const COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK;
+
+extern NSString * const COS_EMITTER_DNS_FETCH;
 @end

@@ -45,3 +45,7 @@ export type DownloadParameters= {
     region?: string
 }
 
+export type DnsMapParameters= {
+    domain: string, 
+    ips: Array<string>, 
+}

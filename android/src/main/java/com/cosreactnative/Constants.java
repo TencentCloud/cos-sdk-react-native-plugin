@@ -28,6 +28,8 @@ package com.cosreactnative;
 public final class Constants {
   // native to js: 更新临时秘钥
   public static final String COS_EMITTER_UPDATE_SESSION_CREDENTIAL = "COSEmitterUpdateSessionCredential";
+  // native to js: 获取domain对应的ip数组
+  public static final String COS_EMITTER_DNS_FETCH = "COSEmitterDnsFetch";
   // native to js: 回调结果成功
   public static final String COS_EMITTER_RESULT_SUCCESS_CALLBACK = "COSEmitterResultSuccessCallback";
   // native to js: 回调结果失败

@@ -95,6 +95,29 @@ export default class App extends React.Component {
         COS_SECRET_KEY
       )
     }
+
+    // 设置静态自定义dns
+    // const dnsArray = [
+    //   {domain:'service.cos.myqcloud.com', ips: ["106.119.174.56", "106.119.174.57", "106.119.174.55"]},
+    //   {domain:'000000-1253960454.cos.ap-guangzhou.myqcloud.com', ips: ["27.155.119.179", "27.155.119.180", "27.155.119.166", "27.155.119.181"]},
+    //   {domain:'cos.ap-guangzhou.myqcloud.com', ips: ["27.155.119.179", "27.155.119.180", "27.155.119.166", "27.155.119.181"]},
+    // ];
+    // Cos.initCustomerDNS(dnsArray);
+    // 设置动态自定义dns回调（更推荐使用 因为更灵活）
+    // Cos.initCustomerDNSFetch(async (domain: string) => {
+    //   const dnsMap: Map<string, string[]> = new Map([
+    //     ['service.cos.myqcloud.com', ["106.119.174.56", "106.119.174.57", "106.119.174.55"]],
+    //     ['cos.ap-guangzhou.myqcloud.com', ["27.155.119.179", "27.155.119.180", "27.155.119.166", "27.155.119.181"]],
+    //   ]);
+    //   let ips = null;
+    //   dnsMap.forEach((value, key) => {
+    //     if (domain.endsWith(key)) {
+    //       console.log(`HOST: ${key}, IPS: ${JSON.stringify(value)}`);
+    //       ips = value;
+    //     }
+    //   });
+    //   return ips;
+    // });
   };
 
   render() {

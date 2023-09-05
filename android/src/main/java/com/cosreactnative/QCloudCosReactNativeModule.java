@@ -14,6 +14,7 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableMap;
@@ -68,6 +69,9 @@ import com.tencent.qcloud.core.auth.SessionQCloudCredentials;
 import com.tencent.qcloud.core.auth.ShortTimeCredentialProvider;
 import com.tencent.qcloud.core.task.TaskExecutors;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -84,12 +88,20 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   private final ReactApplicationContext reactContext;
   private QCloudCredentialProvider qCloudCredentialProvider = null;
   private final Object credentialProviderLock = new Object();
+  private final Object fetchDnsWaitingLock = new Object();
 
   private final Map<String, CosXmlService> cosServices = new HashMap<>();
   private final Map<String, TransferManager> transferManagers = new HashMap<>();
   private final Map<String, COSXMLTask> taskMap = new HashMap<>();
 
   public static ThreadPoolExecutor COMMAND_EXECUTOR = null;
+
+  // 静态配置自定义dns
+  private Map<String, String[]> dnsMap = null;
+  // 动态dns fetch
+  private boolean initDnsFetch = false;
+  // 动态dns fetch中间缓存
+  private final Map<String, List<InetAddress>> fetchMapCache = new HashMap<>();
 
   public QCloudCosReactNativeModule(ReactApplicationContext reactContext) {
     super(reactContext);
@@ -139,6 +151,23 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void initCustomerDNS(@NonNull ReadableArray dnsArray, final Promise promise) {
+    dnsMap = new HashMap<>();
+    for (int i=0;i<dnsArray.size();i++){
+      ReadableMap dns = dnsArray.getMap(i);
+      ReadableArray ipsArray = dns.getArray("ips");
+      dnsMap.put(dns.getString("domain"), ipsArray.toArrayList().toArray(new String[0]));
+    }
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void initCustomerDNSFetch(final Promise promise) {
+    initDnsFetch = true;
+    promise.resolve(null);
+  }
+
+  @ReactMethod
   public void forceInvalidationCredential(final Promise promise) {
     if(qCloudCredentialProvider instanceof BridgeCredentialProvider){
       BridgeCredentialProvider bridgeCredentialProvider = (BridgeCredentialProvider)qCloudCredentialProvider;
@@ -175,6 +204,25 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       } else if(qCloudCredentialProvider instanceof BridgeScopeLimitCredentialProvider) {
         ((BridgeScopeLimitCredentialProvider) qCloudCredentialProvider).setNewCredentials(sessionQCloudCredentials);
       }
+    }
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setDNSFetchIps(@NonNull String domain, @Nullable ReadableArray ips, final Promise promise) {
+    List<InetAddress> inetAddresses = new ArrayList<>();
+    if(ips != null && ips.size() > 0){
+      for (String ip : ips.toArrayList().toArray(new String[0])) {
+        try {
+          inetAddresses.add(InetAddress.getByName(ip));
+        } catch (UnknownHostException e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    this.fetchMapCache.put(domain, inetAddresses);
+    synchronized (fetchDnsWaitingLock) {
+      fetchDnsWaitingLock.notify();
     }
     promise.resolve(null);
   }
@@ -837,7 +885,39 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (qCloudCredentialProvider == null) {
       throw new IllegalArgumentException("Please call method initWithPlainSecret or initWithSessionCredentialCallback first");
     } else {
-      return new CosXmlService(context, serviceConfigBuilder.builder(), qCloudCredentialProvider);
+      CosXmlService cosXmlService = new CosXmlService(context, serviceConfigBuilder.builder(), qCloudCredentialProvider);
+      if(dnsMap != null) {
+        try {
+          for (String domain: dnsMap.keySet()) {
+            if(dnsMap.get(domain) != null && dnsMap.get(domain).length > 0){
+              cosXmlService.addCustomerDNS(domain, dnsMap.get(domain));
+            }
+          }
+        } catch (CosXmlClientException e) {
+          e.printStackTrace();
+        }
+      }
+      if(initDnsFetch){
+        cosXmlService.addCustomerDNSFetch(domain -> {
+          // 发送获取ips的通知
+          reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(Constants.COS_EMITTER_DNS_FETCH, domain);
+          // 加锁等待
+          synchronized (fetchDnsWaitingLock) {
+            try {
+              fetchDnsWaitingLock.wait(15000);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }
+          if(fetchMapCache.containsKey(domain)){
+            return fetchMapCache.get(domain);
+          } else {
+            return null;
+          }
+        });
+      }
+      return cosXmlService;
     }
   }
 
