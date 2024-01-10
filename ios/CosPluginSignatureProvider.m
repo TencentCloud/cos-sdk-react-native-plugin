@@ -206,10 +206,10 @@
   for (STSCredentialScope *scope in scopes) {
     if (scope != nil) {
       NSDictionary<NSString *, NSString *> *scopeMap = @{
-        @"action": scope.action,
-        @"bucket": scope.bucket,
-        @"prefix": scope.prefix,
-        @"region": scope.region,
+        @"action": scope.action?:@"",
+        @"bucket": scope.bucket?:@"",
+        @"prefix": scope.prefix?:@"",
+        @"region": scope.region?:@"",
       };
       [scopeList addObject:scopeMap];
     }
@@ -218,7 +218,7 @@
   NSData *jsonData = [NSJSONSerialization dataWithJSONObject:scopeList options:0 error:&error];
   if (jsonData == nil) {
     NSLog(@"Error serializing JSON: %@", error);
-    return nil;
+    return @"";
   }
   return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }

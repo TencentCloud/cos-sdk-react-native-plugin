@@ -229,7 +229,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void setCloseBeacon(boolean isCloseBeacon, final Promise promise) {
-    CosXmlBaseService.IS_CLOSE_BEACON = isCloseBeacon;
+    CosXmlBaseService.IS_CLOSE_REPORT = isCloseBeacon;
     promise.resolve(null);
   }
 
@@ -844,6 +844,9 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     }
     if (config.hasKey("isHttps")) {
       serviceConfigBuilder.isHttps(config.getBoolean("isHttps"));
+    }
+    if (config.hasKey("domainSwitch")) {
+      serviceConfigBuilder.setDomainSwitch(config.getBoolean("domainSwitch"));
     }
     if (config.hasKey("host")) {
       serviceConfigBuilder.setHost(config.getString("host"));

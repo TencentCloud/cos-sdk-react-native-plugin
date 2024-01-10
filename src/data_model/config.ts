@@ -11,6 +11,7 @@ export type CosXmlServiceConfig = {
   userAgent?: string;
   dnsCache?: boolean;
   accelerate?: boolean;
+  domainSwitch?: boolean;
 }
 
 export type TransferConfig = {

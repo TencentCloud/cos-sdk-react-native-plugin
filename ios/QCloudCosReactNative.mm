@@ -183,6 +183,10 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
     } else {
         configuration.userAgentProductKey = QCloudCOS_UA_FLUTTER_PLUGIN;
     }
+    id domainSwitch = [config objectForKey:@"domainSwitch"];
+    if(domainSwitch){
+        configuration.disableChangeHost = ![domainSwitch boolValue];
+    }
     id isHttps = [config objectForKey:@"isHttps"];
     if(isHttps){
         endpoint.useHTTPS = isHttps;
@@ -907,12 +911,7 @@ RCT_REMAP_METHOD(download,
             } else {
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                                   userInfo:@{@"eventName":COS_EMITTER_RESULT_FAIL_CALLBACK,
-                                                                             @"eventBody":@{
-                                                                                 @"transferKey": transferKey,
-                                                                                 @"callbackKey":resultCallbackKey,
-                                                                                 @"clientException":[self buildClientException:error],
-                                                                                 @"serviceException":[self buildServiceException:error]
-                                                                             }}];
+                                                                             @"eventBody":[self buildErrorEventBody:error transferKey:transferKey resultCallbackKey:resultCallbackKey]}];
             }
         }
         [QCloudCOSTaskCache() removeObject:taskKey];
@@ -1168,8 +1167,8 @@ RCT_REMAP_METHOD(upload,
                 NSDictionary* headerAll = [[result __originHTTPURLResponse__] allHeaderFields];
                 NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
                 NSString* encodedAccessUrl = [result.location stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-                [resultDictionary setObject:encodedAccessUrl forKey:@"accessUrl"];
-                [resultDictionary setObject:result.eTag forKey:@"eTag"];
+                [resultDictionary setObject:encodedAccessUrl?:@"" forKey:@"accessUrl"];
+                [resultDictionary setObject:result.eTag?:@"" forKey:@"eTag"];
                 NSString* crc64ecma = [headerAll objectForKey: @"x-cos-hash-crc64ecma"];
                 if(crc64ecma){
                     [resultDictionary setObject:crc64ecma forKey:@"crc64ecma"];
@@ -1182,12 +1181,7 @@ RCT_REMAP_METHOD(upload,
             } else {
                 [[NSNotificationCenter defaultCenter] postNotificationName:COS_NOTIFICATION_NAME object:nil
                                                                   userInfo:@{@"eventName":COS_EMITTER_RESULT_FAIL_CALLBACK,
-                                                                             @"eventBody":@{
-                                                                                 @"transferKey": transferKey,
-                                                                                 @"callbackKey":resultCallbackKey,
-                                                                                 @"clientException":[self buildClientException:error],
-                                                                                 @"serviceException":[self buildServiceException:error]
-                                                                             }}];
+                                                                             @"eventBody":[self buildErrorEventBody:error transferKey:transferKey resultCallbackKey:resultCallbackKey]}];
             }
         }
         [QCloudCOSTaskCache() removeObject:taskKey];
@@ -1213,6 +1207,21 @@ RCT_REMAP_METHOD(upload,
     
     [QCloudCOSTaskCache() setObject:put forKey:taskKey];
     return taskKey;
+}
+
+-(NSDictionary *)buildErrorEventBody:(NSError *)error transferKey:(NSString *)transferKey  resultCallbackKey:(NSString *)resultCallbackKey{
+    NSMutableDictionary * mInfo = @{
+        @"transferKey": transferKey,
+        @"callbackKey":resultCallbackKey,
+    }.mutableCopy;
+    
+    if([self buildClientException:error]){
+        [mInfo setObject:[self buildClientException:error] forKey:@"clientException"];
+    }
+    if([self buildServiceException:error]){
+        [mInfo setObject:[self buildServiceException:error] forKey:@"serviceException"];
+    }
+    return mInfo.copy;
 }
 
 - (nullable CosXmlClientException *)buildClientException:(nonnull NSError *) error {
