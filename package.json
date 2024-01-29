@@ -1,6 +1,6 @@
 {
   "name": "react-native-cos-sdk",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Tencent COS XML SDK for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
