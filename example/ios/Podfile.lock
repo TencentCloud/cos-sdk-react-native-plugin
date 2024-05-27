@@ -78,13 +78,15 @@ PODS:
   - hermes-engine/Pre-built (0.71.0)
   - libevent (2.1.12)
   - OpenSSL-Universal (1.1.1100)
-  - QCloudCore (6.3.3):
-    - QCloudCore/Default (= 6.3.3)
-  - QCloudCore/Default (6.3.3)
-  - QCloudCOSXML (6.3.3):
-    - QCloudCOSXML/Default (= 6.3.3)
-  - QCloudCOSXML/Default (6.3.3):
-    - QCloudCore (= 6.3.3)
+  - QCloudCore (6.4.0):
+    - QCloudCore/Default (= 6.4.0)
+  - QCloudCore/Default (6.4.0):
+    - QCloudTrack/Beacon (= 6.4.0)
+  - QCloudCOSXML (6.4.0):
+    - QCloudCOSXML/Default (= 6.4.0)
+  - QCloudCOSXML/Default (6.4.0):
+    - QCloudCore (= 6.4.0)
+  - QCloudTrack/Beacon (6.4.0)
   - RCT-Folly (2021.07.22.00):
     - boost
     - DoubleConversion
@@ -304,8 +306,8 @@ PODS:
   - React-jsinspector (0.71.0)
   - React-logger (0.71.0):
     - glog
-  - react-native-cos-sdk (1.0.8):
-    - QCloudCOSXML (>= 6.3.3)
+  - react-native-cos-sdk (1.1.0):
+    - QCloudCOSXML (>= 6.4.0)
     - React-Core
   - react-native-document-picker (9.0.1):
     - React-Core
@@ -498,6 +500,7 @@ SPEC REPOS:
     - OpenSSL-Universal
     - QCloudCore
     - QCloudCOSXML
+    - QCloudTrack
     - SocketRocket
     - YogaKit
 
@@ -590,7 +593,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: 57d2868c099736d80fcd648bf211b4431e51a558
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
-  DoubleConversion: 5189b271737e1565bdce30deb4a08d647e3f5f54
+  DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
   FBLazyVector: 61839cba7a48c570b7ac3e1cd8a4d0948382202f
   FBReactNativeSpec: 5a14398ccf5e27c1ca2d7109eb920594ce93c10d
   Flipper: 26fc4b7382499f1281eb8cb921e5c3ad6de91fe0
@@ -603,12 +606,13 @@ SPEC CHECKSUMS:
   Flipper-RSocket: d9d9ade67cbecf6ac10730304bf5607266dd2541
   FlipperKit: cbdee19bdd4e7f05472a66ce290f1b729ba3cb86
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
-  glog: 04b94705f318337d7ead9e6d17c019bd9b1f6b1b
+  glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
   hermes-engine: f6e715aa6c8bd38de6c13bc85e07b0a337edaa89
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   OpenSSL-Universal: ebc357f1e6bc71fa463ccb2fe676756aff50e88c
-  QCloudCore: 0044722792f3c72ae1fd6265e3fc233c670d4bf7
-  QCloudCOSXML: f281564c0418a25eba2c657374927ac61735c3b7
+  QCloudCore: 231bef84178cc0cb87e36b5d074c3045a6d813c8
+  QCloudCOSXML: 796d1bbe01de2ae67e09a2df95bf1aef59336a05
+  QCloudTrack: daf143ed973d47d8a0cf3889ae03389b20464fae
   RCT-Folly: 424b8c9a7a0b9ab2886ffe9c3b041ef628fd4fb1
   RCTRequired: dea3e4163184ea57c50288c15c32c1529265c58f
   RCTTypeSafety: a0834ab89159a346731e8aae55ad6e2cce61c327
@@ -623,7 +627,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 060dd495f1e2af3d87216f7ca8a94c55ec885b4f
   React-jsinspector: 5061fcbec93fd672183dfb39cc2f65e55a0835db
   React-logger: a6c0b3a807a8e81f6d7fea2e72660766f55daa50
-  react-native-cos-sdk: f816e47ca0a189bb0e696763f0e09cea41f05677
+  react-native-cos-sdk: 0539954fdffdc57db7193b534c539ba9c8361fd7
   react-native-document-picker: 2b8f18667caee73a96708a82b284a4f40b30a156
   react-native-progress-view: 4d3bbe6a099ba027b1fedb1548c2c87f74249b70
   react-native-safe-area-context: 99b24a0c5acd0d5dcac2b1a7f18c49ea317be99a
