@@ -71,3 +71,4 @@ lib/
 
 example/src/config/config.ts
 *.hprof
+*.lock
