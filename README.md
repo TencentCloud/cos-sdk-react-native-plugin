@@ -29,6 +29,11 @@ yarn add react-native-cos-sdk
 import Cos from 'react-native-cos-sdk';
 ```
 
+#### 关闭腾讯灯塔上报功能
+
+为了持续跟踪和优化 SDK 的质量，给您带来更好的使用体验，我们在 SDK 中引入了 [腾讯灯塔](https://beacon.qq.com/) SDK，腾讯灯塔只对 COS 侧的请求性能进行监控，不会上报业务侧数据。
+若是想关闭该功能，可以在依赖引入和 import 时将 react-native-cos-sdk 替换为 react-native-cos-sdk-nobeacon 即可。
+
 ## 第三步：开始使用
 
 >!
