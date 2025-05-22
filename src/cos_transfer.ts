@@ -73,7 +73,8 @@ export class CosTransferManger {
       initMultipleUploadCallbackKey,
       parameters.stroageClass,
       parameters.trafficLimit != undefined ?parameters.trafficLimit.toString():parameters.trafficLimit,
-      parameters.region
+      parameters.region,
+      parameters.sessionCredentials
     )
 
     return new TransferTask(this.transferKey, taskId, this.cosTransferModule)
@@ -97,7 +98,8 @@ export class CosTransferManger {
       progressCallbackKey,
       parameters.versionId,
       parameters.trafficLimit != undefined ?parameters.trafficLimit.toString():parameters.trafficLimit,
-      parameters.region
+      parameters.region,
+      parameters.sessionCredentials
     )
 
     return new TransferTask(this.transferKey, taskId, this.cosTransferModule)

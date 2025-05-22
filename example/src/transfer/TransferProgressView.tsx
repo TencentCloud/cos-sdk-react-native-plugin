@@ -2,7 +2,7 @@ import * as React from 'react';
 import { StyleSheet, View, Text, TextInput } from 'react-native';
 import { ProgressView } from "@react-native-community/progress-view";
 import { readableStorageSize } from '../Utils';
-import type { TransferState } from 'src/data_model/enums';
+import type { TransferState } from 'react-native-cos-sdk';
 
 type Props = {
 }

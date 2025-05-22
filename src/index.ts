@@ -3,10 +3,11 @@ import { CosService } from './cos_service';
 import { CosTransferManger } from './cos_transfer';
 import { ScopeLimitCredentialsProvider } from './credentials/scope_credentials';
 import type { CosXmlServiceConfig, TransferConfig } from './data_model/config';
-import { COS_EMITTER_DNS_FETCH, COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent, UpdateSessionCredentialEvent } from './data_model/events';
+import { COS_EMITTER_DNS_FETCH, COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, COS_EMITTER_LOG_CALLBACK, COS_EMITTER_PROGRESS_CALLBACK, COS_EMITTER_RESULT_FAIL_CALLBACK, COS_EMITTER_RESULT_SUCCESS_CALLBACK, COS_EMITTER_STATE_CALLBACK, COS_EMITTER_UPDATE_CLS_SESSION_CREDENTIAL, COS_EMITTER_UPDATE_SESSION_CREDENTIAL, InitMultipleUploadEvent, LogEvent, TransferProgressEvent, TransferResultFailEvent, TransferResultSuccessEvent, TransferStateEvent, UpdateSessionCredentialEvent } from './data_model/events';
 import type { SessionQCloudCredentials, STSCredentialScope } from './data_model/credentials';
 import { IllegalArgumentError } from './data_model/errors';
 import type { DnsMapParameters } from './data_model/parameters';
+import type { LogEntity, LogLevel } from './data_model/log';
 
 const LINKING_ERROR =
   `The package 'react-native-cos-sdk' doesn't seem to be linked. Make sure: \n\n` +
@@ -35,7 +36,7 @@ const CosEventEmitter = NativeModules.CosEventEmitter
       },
     }
   );
-    
+
 
 const DEFAULT_KEY = "";
 
@@ -47,11 +48,15 @@ class Cos {
   private cosTransfers: Map<string, CosTransferManger>;
   private scopeLimitCredentialsProvider: ScopeLimitCredentialsProvider;
 
+  private logListeners: Map<string, (log: LogEntity) => void>;
+
   constructor() {
     this.cosServices = new Map()
     this.cosTransfers = new Map()
     this.scopeLimitCredentialsProvider = new ScopeLimitCredentialsProvider();
-    
+
+    this.logListeners = new Map()
+
     if(Platform.OS === 'ios'){
       this.emitter = new NativeEventEmitter(CosEventEmitter);
     } else if(Platform.OS === 'android') {
@@ -59,7 +64,7 @@ class Cos {
     } else {
       this.emitter = new NativeEventEmitter();
     }
-    
+
     this.emitter.addListener(COS_EMITTER_RESULT_SUCCESS_CALLBACK, (event: TransferResultSuccessEvent) => {
       this.getTransferManger(event.transferKey).runResultSuccessCallBack(event.callbackKey, event.headers);
     });
@@ -74,6 +79,10 @@ class Cos {
     });
     this.emitter.addListener(COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK, (event: InitMultipleUploadEvent) => {
       this.getTransferManger(event.transferKey).runInitMultipleUploadCallback(event.callbackKey, event.bucket, event.key, event.uploadId);
+    });
+    this.emitter.addListener(COS_EMITTER_LOG_CALLBACK, (event: LogEvent) => {
+      const logEntity: LogEntity = JSON.parse(event.logEntityJson);
+      this.logListeners.get(event.key)?.call(this, logEntity);
     });
   }
 
@@ -225,5 +234,110 @@ class Cos {
       throw new IllegalArgumentError(`${key} transfer manger unregistered`);
     }
   }
+
+  /// 启用/禁用 Logcat 日志输出
+  enableLogcat(enable: boolean): Promise<void> {
+    return QCloudCosReactNative.enableLogcat(enable);
+  }
+
+  /// 启用/禁用日志文件输出
+  enableLogFile(enable: boolean): Promise<void> {
+    return QCloudCosReactNative.enableLogFile(enable);
+  }
+
+  /// 添加日志监听器
+  addLogListener(key: string, callback: (logEntity: LogEntity) => void): Promise<void> {
+    this.logListeners.set(key, callback);
+    return QCloudCosReactNative.addLogListener(key);
+  }
+
+  /// 移除日志监听器
+  removeLogListener(key: string): Promise<void> {
+    this.logListeners.delete(key);
+    return QCloudCosReactNative.removeLogListener(key);
+  }
+
+  /// 设置最小日志级别
+  setMinLevel(minLevel: LogLevel): Promise<void> {
+    return QCloudCosReactNative.setMinLevel(minLevel);
+  }
+
+  /// 设置 Logcat 最小日志级别
+  setLogcatMinLevel(minLevel: LogLevel): Promise<void> {
+    return QCloudCosReactNative.setLogcatMinLevel(minLevel);
+  }
+
+  /// 设置日志文件最小级别
+  setFileMinLevel(minLevel: LogLevel): Promise<void> {
+    return QCloudCosReactNative.setFileMinLevel(minLevel);
+  }
+
+  /// 设置 CLS 日志最小级别
+  setClsMinLevel(minLevel: LogLevel): Promise<void> {
+    return QCloudCosReactNative.setClsMinLevel(minLevel);
+  }
+
+  /// 设置设备 ID
+  setDeviceID(deviceID: string): Promise<void> {
+    return QCloudCosReactNative.setDeviceID(deviceID);
+  }
+
+  /// 设置设备型号
+  setDeviceModel(deviceModel: string): Promise<void> {
+    return QCloudCosReactNative.setDeviceModel(deviceModel);
+  }
+
+  /// 设置应用版本
+  setAppVersion(appVersion: string): Promise<void> {
+    return QCloudCosReactNative.setAppVersion(appVersion);
+  }
+
+  /// 设置额外信息
+  setExtras(extras: object): Promise<void> {
+    return QCloudCosReactNative.setExtras(extras);
+  }
+
+  /// 设置日志文件加密密钥
+  setLogFileEncryptionKey(key: Uint8Array, iv: Uint8Array): Promise<void> {
+    const keyArray = Array.from(key); // 或 [...key]
+    const ivArray = Array.from(iv);
+    return QCloudCosReactNative.setLogFileEncryptionKey(keyArray, ivArray);
+  }
+
+  /// 设置匿名 CLS 通道
+  setCLsChannelAnonymous(topicId: string, endpoint: string): Promise<void> {
+    return QCloudCosReactNative.setCLsChannelAnonymous(topicId, endpoint);
+  }
+
+  /// 设置静态密钥 CLS 通道
+  setCLsChannelStaticKey(topicId: string, endpoint: string, secretId: string, secretKey: string): Promise<void> {
+    return QCloudCosReactNative.setCLsChannelStaticKey(topicId, endpoint, secretId, secretKey);
+  }
+
+  /// 设置会话凭证 CLS 通道
+  setCLsChannelSessionCredential(topicId: string, endpoint: string, callback: () => Promise<SessionQCloudCredentials | null>): Promise<void> {
+    this.emitter.addListener(COS_EMITTER_UPDATE_CLS_SESSION_CREDENTIAL, async () => {
+      const credential = await callback()
+      if(credential){
+        QCloudCosReactNative.updateCLsChannelSessionCredential(credential)
+      }
+    });
+    return QCloudCosReactNative.setCLsChannelSessionCredential(topicId, endpoint);
+  }
+
+  /// 添加敏感信息过滤规则
+  addSensitiveRule(ruleName: string, regex: string): Promise<void> {
+    return QCloudCosReactNative.addSensitiveRule(ruleName, regex);
+  }
+
+  /// 移除敏感信息过滤规则
+  removeSensitiveRule(ruleName: string): Promise<void> {
+    return QCloudCosReactNative.removeSensitiveRule(ruleName);
+  }
+
+  getLogRootDir(): Promise<string> {
+     return QCloudCosReactNative.getLogRootDir();
+  }
+
 }
 export default new Cos()

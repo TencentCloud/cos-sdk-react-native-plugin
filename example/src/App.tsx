@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, TouchableHighlight, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import Cos from 'react-native-cos-sdk';
-import { USE_SESSION_TOKEN_CREDENTIAL, STS_URL, COS_SECRET_ID, COS_SECRET_KEY, USE_SCOPE_LIMIT_TOKEN_CREDENTIAL, STS_SCOPE_LIMIT_URL } from './config/config';
+import { USE_SESSION_TOKEN_CREDENTIAL, STS_URL, COS_SECRET_ID, COS_SECRET_KEY, USE_SCOPE_LIMIT_TOKEN_CREDENTIAL, STS_SCOPE_LIMIT_URL, USE_CREDENTIAL } from './config/config';
 import { ObjectListScreen } from './object/ObjectListScreen';
 import { BucketListScreen } from './bucket/BucketListScreen';
 import { BucketAddScreen } from './bucket/BucketAddScreen';
@@ -12,7 +12,7 @@ import { RegionListScreen } from './bucket/RegionListScreen';
 import { DownloadScreen } from './transfer/DownloadScreen';
 import { UploadScreen } from './transfer/UploadScreen';
 import { TestScreen } from './test/TestScreen';
-import type { STSCredentialScope } from 'src/data_model/credentials';
+import type { STSCredentialScope } from 'react-native-cos-sdk';
 
 export type RootStackParamList = {
   BucketList: { addBucket: boolean | undefined };
@@ -27,74 +27,76 @@ export type RootStackParamList = {
 const RootStack = createStackNavigator<RootStackParamList>();
 export default class App extends React.Component {
   componentDidMount() {
-    // 初始化秘钥凭证
-    if (USE_SESSION_TOKEN_CREDENTIAL) {
-      if (!USE_SCOPE_LIMIT_TOKEN_CREDENTIAL) {
-        // 使用临时密钥初始化
-        Cos.initWithSessionCredentialCallback(async () => {
-          // 请求临时密钥
-          let response = null;
-          try{
-            response = await fetch(STS_URL);
-          } catch(e){
-            console.error(e);
-            return null;
+    if(USE_CREDENTIAL){
+         // 初始化秘钥凭证
+        if (USE_SESSION_TOKEN_CREDENTIAL) {
+          if (!USE_SCOPE_LIMIT_TOKEN_CREDENTIAL) {
+            // 使用临时密钥初始化
+            Cos.initWithSessionCredentialCallback(async () => {
+              // 请求临时密钥
+              let response = null;
+              try{
+                response = await fetch(STS_URL);
+              } catch(e){
+                console.error(e);
+                return null;
+              }
+              const responseJson = await response.json();
+              const credentials = responseJson.credentials;
+              const startTime = responseJson.startTime;
+              const expiredTime = responseJson.expiredTime;
+              const sessionCredentials = {
+                tmpSecretId: credentials.tmpSecretId,
+                tmpSecretKey: credentials.tmpSecretKey,
+                startTime: startTime,
+                expiredTime: expiredTime,
+                sessionToken: credentials.sessionToken
+              };
+              console.log(sessionCredentials);
+              return sessionCredentials;
+            })
+          } else {
+            // 使用范围限制的临时密钥初始化
+            Cos.initWithScopeLimitCredentialCallback(async (stsScopesArray:Array<STSCredentialScope>) => {
+              // 请求范围限制的临时密钥
+              console.log(JSON.stringify(stsScopesArray));
+              let response = null;
+              try{
+                response = await fetch(STS_SCOPE_LIMIT_URL, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(stsScopesArray),
+                });
+              } catch(e){
+                console.error(e);
+                return null;
+              }
+              const responseJson = await response.json();
+              const credentials = responseJson.credentials;
+              const startTime = responseJson.startTime;
+              const expiredTime = responseJson.expiredTime;
+              const sessionCredentials = {
+                tmpSecretId: credentials.tmpSecretId,
+                tmpSecretKey: credentials.tmpSecretKey,
+                startTime: startTime,
+                expiredTime: expiredTime,
+                sessionToken: credentials.sessionToken
+              };
+              console.log(sessionCredentials);
+              return sessionCredentials;
+            })
           }
-          const responseJson = await response.json();
-          const credentials = responseJson.credentials;
-          const startTime = responseJson.startTime;
-          const expiredTime = responseJson.expiredTime;
-          const sessionCredentials = {
-            tmpSecretId: credentials.tmpSecretId,
-            tmpSecretKey: credentials.tmpSecretKey,
-            startTime: startTime,
-            expiredTime: expiredTime,
-            sessionToken: credentials.sessionToken
-          };
-          console.log(sessionCredentials);
-          return sessionCredentials;
-        })
-      } else {
-        // 使用范围限制的临时密钥初始化
-        Cos.initWithScopeLimitCredentialCallback(async (stsScopesArray:Array<STSCredentialScope>) => {
-          // 请求范围限制的临时密钥
-          console.log(JSON.stringify(stsScopesArray));
-          let response = null;
-          try{
-            response = await fetch(STS_SCOPE_LIMIT_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(stsScopesArray),
-            });
-          } catch(e){
-            console.error(e);
-            return null;
-          }
-          
-          const responseJson = await response.json();
-          const credentials = responseJson.credentials;
-          const startTime = responseJson.startTime;
-          const expiredTime = responseJson.expiredTime;
-          const sessionCredentials = {
-            tmpSecretId: credentials.tmpSecretId,
-            tmpSecretKey: credentials.tmpSecretKey,
-            startTime: startTime,
-            expiredTime: expiredTime,
-            sessionToken: credentials.sessionToken
-          };
-          console.log(sessionCredentials);
-          return sessionCredentials;
-        })
-      }
-    } else {
-      // 使用永久密钥进行本地调试
-      Cos.initWithPlainSecret(
-        COS_SECRET_ID,
-        COS_SECRET_KEY
-      )
+        } else {
+          // 使用永久密钥进行本地调试
+          Cos.initWithPlainSecret(
+            COS_SECRET_ID,
+            COS_SECRET_KEY
+          )
+        }
     }
+ 
 
     // 设置静态自定义dns
     // const dnsArray = [

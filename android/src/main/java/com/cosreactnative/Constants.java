@@ -40,4 +40,9 @@ public final class Constants {
   public static final String COS_EMITTER_STATE_CALLBACK = "COSEmitterStateCallback";
   // native to js: 回调分块上传初始化
   public static final String COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK = "COSEmitterInitMultipleUploadCallback";
+
+  // native to js: 更新CLS临时秘钥
+  public static final String COS_EMITTER_UPDATE_CLS_SESSION_CREDENTIAL = "COSEmitterUpdateClsSessionCredential";
+  // native to js: 日志回调
+  public static final String COS_EMITTER_LOG_CALLBACK = "COSEmitterLogCallback";
 }

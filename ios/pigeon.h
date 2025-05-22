@@ -4,6 +4,23 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// 日志级别枚举
+typedef NS_ENUM(NSUInteger, LogLevel) {
+  LogLevelVerbose = 0,
+  LogLevelDebug = 1,
+  LogLevelInfo = 2,
+  LogLevelWarn = 3,
+  LogLevelError = 4,
+};
+
+typedef NS_ENUM(NSUInteger, LogCategory) {
+  LogCategoryProcess = 0,
+  LogCategoryResult = 1,
+  LogCategoryNetwork = 2,
+  LogCategoryProbe = 3,
+  LogCategoryError = 4,
+};
+
 @class CosXmlClientException;
 @class CosXmlServiceException;
 @class STSCredentialScope;
@@ -13,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
 @class CommonPrefixes;
 @class Content;
 @class BucketContents;
+@class LogEntity;
 
 @interface CosXmlClientException : NSObject
 /// `init` unavailable to enforce nonnull fields, see the `make` class method.
@@ -167,4 +185,39 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, copy, nullable) NSString * delimiter;
 @end
 
+@interface LogEntity : NSObject
+/// `init` unavailable to enforce nonnull fields, see the `make` class method.
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)makeWithTimestamp:(NSNumber *)timestamp
+    level:(LogLevel)level
+    category:(LogCategory)category
+    tag:(NSString *)tag
+    message:(NSString *)message
+    threadName:(NSString *)threadName
+    extras:(nullable NSDictionary<NSString *, NSString *> *)extras
+    throwable:(nullable NSString *)throwable;
+@property(nonatomic, strong) NSNumber * timestamp;
+@property(nonatomic, assign) LogLevel level;
+@property(nonatomic, assign) LogCategory category;
+@property(nonatomic, copy) NSString * tag;
+@property(nonatomic, copy) NSString * message;
+@property(nonatomic, copy) NSString * threadName;
+@property(nonatomic, strong, nullable) NSDictionary<NSString *, NSString *> * extras;
+@property(nonatomic, copy, nullable) NSString * throwable;
+@end
+
+@interface SessionQCloudCredentials : NSObject
+/// `init` unavailable to enforce nonnull fields, see the `make` class method.
+- (instancetype)init NS_UNAVAILABLE;
++ (instancetype)makeWithSecretId:(NSString *)secretId
+                       secretKey:(NSString *)secretKey
+                           token:(NSString *)token
+                       startTime:(nullable NSNumber *)startTime
+        expiredTime:(NSNumber *)expiredTime;
+@property(nonatomic, copy) NSString * secretId;
+@property(nonatomic, copy) NSString * secretKey;
+@property(nonatomic, copy) NSString * token;
+@property(nonatomic, strong, nullable) NSNumber * startTime;
+@property(nonatomic, strong) NSNumber * expiredTime;
+@end
 NS_ASSUME_NONNULL_END

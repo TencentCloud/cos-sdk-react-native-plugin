@@ -4,6 +4,8 @@
 
 // 腾讯云APP ID
 export const COS_APP_ID: string = 'XXXXXXXX'  
+// 是否使用临时密钥回调请求 COS
+export const USE_CREDENTIAL: boolean = true 
 // 是否使用临时密钥请求 COS
 export const USE_SESSION_TOKEN_CREDENTIAL: boolean = true 
 // 是否使用范围限制的临时密钥请求 COS

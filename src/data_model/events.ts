@@ -15,6 +15,11 @@ export const COS_EMITTER_STATE_CALLBACK: string = "COSEmitterStateCallback";
 // native to js: 回调分块上传初始化
 export const COS_EMITTER_INIT_MULTIPLE_UPLOAD_CALLBACK: string = "COSEmitterInitMultipleUploadCallback";
 
+// native to js: 更新CLS临时秘钥
+export const COS_EMITTER_UPDATE_CLS_SESSION_CREDENTIAL: string = "COSEmitterUpdateClsSessionCredential"
+// native to js: 日志回调
+export const COS_EMITTER_LOG_CALLBACK: string = "COSEmitterLogCallback"
+
 export type UpdateSessionCredentialEvent = {
     stsScopesArrayJson?: string;
 }
@@ -51,4 +56,9 @@ export type InitMultipleUploadEvent = {
     bucket: string;
     key: string;
     uploadId: string;
+}
+
+export type LogEvent = {
+    key: string;
+    logEntityJson: string;
 }

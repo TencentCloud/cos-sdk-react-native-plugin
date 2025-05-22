@@ -3,8 +3,8 @@ import Toast from 'react-native-toast-message';
 import { StyleSheet, View, Text, FlatList, RefreshControl, StatusBar, TouchableHighlight } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getDefaultService } from '../Constant';
-import type { Bucket } from 'src/data_model/bucket';
-import { getErrorMessage, toDateTimeString } from '../Utils';
+import type { Bucket } from 'react-native-cos-sdk';
+import { getErrorMessage, getSessionCredentials, toDateTimeString } from '../Utils';
 import type { RootStackParamList } from '../App';
 import { 
   SafeAreaInsetsContext
@@ -48,7 +48,7 @@ export class BucketListScreen extends React.Component<Props> {
     this.setState({ isLoading: true });
     try {
       let service = await getDefaultService();
-      let listAllMyBuckets = await service.getService()
+      let listAllMyBuckets = await service.getService(await getSessionCredentials())
       this.setState({ isLoading: false, buckets: listAllMyBuckets.buckets});
     } catch (e) {
       console.log(e);

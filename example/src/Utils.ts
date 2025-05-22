@@ -1,4 +1,6 @@
-import type { CosXmlClientError, CosXmlServiceError } from "src/data_model/errors"
+import type { CosXmlClientError, CosXmlServiceError } from 'react-native-cos-sdk';
+import type { SessionQCloudCredentials } from 'react-native-cos-sdk';
+import { STS_URL, USE_CREDENTIAL } from './config/config';
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message
@@ -32,4 +34,32 @@ export function toDateTimeString(utc: string | undefined): string {
     }
 
     return `${sizeInBL.toFixed(2)}${units[index]}`;
+  }
+
+  export async function getSessionCredentials(): Promise<SessionQCloudCredentials> {
+    if(USE_CREDENTIAL){
+      return null;
+    }
+
+    // 请求临时密钥
+    let response = null;
+    try{
+      response = await fetch(STS_URL);
+    } catch(e){
+      console.error(e);
+      return null;
+    }
+    const responseJson = await response.json();
+    const credentials = responseJson.credentials;
+    const startTime = responseJson.startTime;
+    const expiredTime = responseJson.expiredTime;
+    const sessionCredentials = {
+      tmpSecretId: credentials.tmpSecretId,
+      tmpSecretKey: credentials.tmpSecretKey,
+      startTime: startTime,
+      expiredTime: expiredTime,
+      sessionToken: credentials.sessionToken
+    };
+    console.log(sessionCredentials);
+    return sessionCredentials;
   }

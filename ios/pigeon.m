@@ -14,7 +14,16 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
   id result = array[key];
   return (result == [NSNull null]) ? nil : result;
 }
-
+@interface SessionQCloudCredentials ()
++ (SessionQCloudCredentials *)fromList:(NSArray *)list;
++ (nullable SessionQCloudCredentials *)nullableFromList:(NSArray *)list;
+- (NSArray *)toList;
+@end
+@interface LogEntity ()
++ (LogEntity *)fromList:(NSArray *)list;
++ (nullable LogEntity *)nullableFromList:(NSArray *)list;
+- (NSArray *)toList;
+@end
 @interface CosXmlClientException ()
 + (CosXmlClientException *)fromMap:(NSDictionary *)dict;
 + (nullable CosXmlClientException *)nullableFromMap:(NSDictionary *)dict;
@@ -369,5 +378,96 @@ static id GetNullableObjectAtIndex(NSArray* array, NSInteger key) {
     @"commonPrefixesList" : (self.commonPrefixesList ?: [NSNull null]),
     @"delimiter" : (self.delimiter ?: [NSNull null]),
   };
+}
+@end
+
+@implementation LogEntity
++ (instancetype)makeWithTimestamp:(NSNumber *)timestamp
+    level:(LogLevel)level
+    category:(LogCategory)category
+    tag:(NSString *)tag
+    message:(NSString *)message
+    threadName:(NSString *)threadName
+    extras:(nullable NSDictionary<NSString *, NSString *> *)extras
+    throwable:(nullable NSString *)throwable {
+  LogEntity* pigeonResult = [[LogEntity alloc] init];
+  pigeonResult.timestamp = timestamp;
+  pigeonResult.level = level;
+  pigeonResult.category = category;
+  pigeonResult.tag = tag;
+  pigeonResult.message = message;
+  pigeonResult.threadName = threadName;
+  pigeonResult.extras = extras;
+  pigeonResult.throwable = throwable;
+  return pigeonResult;
+}
++ (LogEntity *)fromList:(NSArray *)list {
+  LogEntity *pigeonResult = [[LogEntity alloc] init];
+  pigeonResult.timestamp = GetNullableObjectAtIndex(list, 0);
+  NSAssert(pigeonResult.timestamp != nil, @"");
+  pigeonResult.level = [GetNullableObjectAtIndex(list, 1) integerValue];
+  pigeonResult.category = [GetNullableObjectAtIndex(list, 2) integerValue];
+  pigeonResult.tag = GetNullableObjectAtIndex(list, 3);
+  NSAssert(pigeonResult.tag != nil, @"");
+  pigeonResult.message = GetNullableObjectAtIndex(list, 4);
+  NSAssert(pigeonResult.message != nil, @"");
+  pigeonResult.threadName = GetNullableObjectAtIndex(list, 5);
+  NSAssert(pigeonResult.threadName != nil, @"");
+  pigeonResult.extras = GetNullableObjectAtIndex(list, 6);
+  pigeonResult.throwable = GetNullableObjectAtIndex(list, 7);
+  return pigeonResult;
+}
++ (nullable LogEntity *)nullableFromList:(NSArray *)list { return (list) ? [LogEntity fromList:list] : nil; }
+- (NSArray *)toList {
+  return @[
+    (self.timestamp ?: [NSNull null]),
+    @(self.level),
+    @(self.category),
+    (self.tag ?: [NSNull null]),
+    (self.message ?: [NSNull null]),
+    (self.threadName ?: [NSNull null]),
+    (self.extras ?: [NSNull null]),
+    (self.throwable ?: [NSNull null]),
+  ];
+}
+
+@end
+
+@implementation SessionQCloudCredentials
++ (instancetype)makeWithSecretId:(NSString *)secretId
+                       secretKey:(NSString *)secretKey
+                           token:(NSString *)token
+                       startTime:(nullable NSNumber *)startTime
+        expiredTime:(NSNumber *)expiredTime {
+    SessionQCloudCredentials* pigeonResult = [[SessionQCloudCredentials alloc] init];
+    pigeonResult.secretId = secretId;
+    pigeonResult.secretKey = secretKey;
+    pigeonResult.token = token;
+    pigeonResult.startTime = startTime;
+    pigeonResult.expiredTime = expiredTime;
+    return pigeonResult;
+}
++ (SessionQCloudCredentials *)fromList:(NSArray *)list {
+    SessionQCloudCredentials *pigeonResult = [[SessionQCloudCredentials alloc] init];
+    pigeonResult.secretId = GetNullableObjectAtIndex(list, 0);
+    NSAssert(pigeonResult.secretId != nil, @"");
+    pigeonResult.secretKey = GetNullableObjectAtIndex(list, 1);
+    NSAssert(pigeonResult.secretKey != nil, @"");
+    pigeonResult.token = GetNullableObjectAtIndex(list, 2);
+    NSAssert(pigeonResult.token != nil, @"");
+    pigeonResult.startTime = GetNullableObjectAtIndex(list, 3);
+    pigeonResult.expiredTime = GetNullableObjectAtIndex(list, 4);
+    NSAssert(pigeonResult.expiredTime != nil, @"");
+    return pigeonResult;
+}
++ (nullable SessionQCloudCredentials *)nullableFromList:(NSArray *)list { return (list) ? [SessionQCloudCredentials fromList:list] : nil; }
+- (NSArray *)toList {
+    return @[
+            (self.secretId ?: [NSNull null]),
+            (self.secretKey ?: [NSNull null]),
+            (self.token ?: [NSNull null]),
+            (self.startTime ?: [NSNull null]),
+            (self.expiredTime ?: [NSNull null]),
+    ];
 }
 @end

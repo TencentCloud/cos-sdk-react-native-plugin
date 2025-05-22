@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -67,7 +68,11 @@ import com.tencent.cos.xml.transfer.TransferManager;
 import com.tencent.qcloud.core.auth.QCloudCredentialProvider;
 import com.tencent.qcloud.core.auth.SessionQCloudCredentials;
 import com.tencent.qcloud.core.auth.ShortTimeCredentialProvider;
-import com.tencent.qcloud.core.task.TaskExecutors;
+import com.tencent.qcloud.core.logger.COSLogger;
+import com.tencent.qcloud.core.logger.LogLevel;
+import com.tencent.qcloud.core.logger.channel.CosLogListener;
+import com.tencent.qcloud.track.cls.ClsLifecycleCredentialProvider;
+import com.tencent.qcloud.track.cls.ClsSessionCredentials;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -75,9 +80,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 @ReactModule(name = QCloudCosReactNativeModule.NAME)
 public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
@@ -85,16 +87,17 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
 
   private static final String DEFAULT_KEY = "";
 
+  private Gson gson = new Gson();
+
   private final ReactApplicationContext reactContext;
   private QCloudCredentialProvider qCloudCredentialProvider = null;
-  private final Object credentialProviderLock = new Object();
   private final Object fetchDnsWaitingLock = new Object();
 
   private final Map<String, CosXmlService> cosServices = new HashMap<>();
   private final Map<String, TransferManager> transferManagers = new HashMap<>();
   private final Map<String, COSXMLTask> taskMap = new HashMap<>();
-
-  public static ThreadPoolExecutor COMMAND_EXECUTOR = null;
+  private final Map<String, CosLogListener> cosLogListenerMap = new HashMap<>();
+  private ClsLifecycleCredentialProvider qClsLifecycleCredentialProvider = null;
 
   // 静态配置自定义dns
   private Map<String, String[]> dnsMap = null;
@@ -108,9 +111,6 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
 
     this.reactContext = reactContext;
     CosXmlBaseService.BRIDGE = "ReactNative";
-
-    COMMAND_EXECUTOR = new ThreadPoolExecutor(2, 10, 5L,
-      TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE));
   }
 
   @Override
@@ -126,27 +126,18 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       secretKey,
       600
     );
-    synchronized (credentialProviderLock) {
-      credentialProviderLock.notify();
-    }
     promise.resolve(null);
   }
 
   @ReactMethod
   public void initWithSessionCredentialCallback(final Promise promise) {
     qCloudCredentialProvider = new BridgeCredentialProvider(reactContext);
-    synchronized (credentialProviderLock) {
-      credentialProviderLock.notify();
-    }
     promise.resolve(null);
   }
 
   @ReactMethod
   public void initWithScopeLimitCredentialCallback(final Promise promise) {
     qCloudCredentialProvider = new BridgeScopeLimitCredentialProvider(reactContext);
-    synchronized (credentialProviderLock) {
-      credentialProviderLock.notify();
-    }
     promise.resolve(null);
   }
 
@@ -235,36 +226,16 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
 
   @ReactMethod
   public void registerDefaultService(@NonNull ReadableMap config, final Promise promise) {
-    COMMAND_EXECUTOR.execute(new Runnable() {
-      @Override
-      public void run() {
-        CosXmlService service = buildCosXmlService(reactContext, config);
-        runMainThread(new Runnable() {
-          @Override
-          public void run() {
-            cosServices.put(DEFAULT_KEY, service);
-            promise.resolve(null);
-          }
-        });
-      }
-    });
+    CosXmlService service = buildCosXmlService(reactContext, config);
+    cosServices.put(DEFAULT_KEY, service);
+    promise.resolve(null);
   }
 
   @ReactMethod
   public void registerDefaultTransferManger(@NonNull ReadableMap config, @Nullable ReadableMap transferConfig, final Promise promise) {
-    COMMAND_EXECUTOR.execute(new Runnable() {
-      @Override
-      public void run() {
-        TransferManager transferManager = buildTransferManager(reactContext, config, transferConfig);
-        runMainThread(new Runnable() {
-          @Override
-          public void run() {
-            transferManagers.put(DEFAULT_KEY, transferManager);
-            promise.resolve(null);
-          }
-        });
-      }
-    });
+    TransferManager transferManager = buildTransferManager(reactContext, config, transferConfig);
+    transferManagers.put(DEFAULT_KEY, transferManager);
+    promise.resolve(null);
   }
 
   @ReactMethod
@@ -272,19 +243,9 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (key.isEmpty()) {
       promise.reject(new IllegalArgumentException("register key cannot be empty"));
     }
-    COMMAND_EXECUTOR.execute(new Runnable() {
-      @Override
-      public void run() {
-        CosXmlService service = buildCosXmlService(reactContext, config);
-        runMainThread(new Runnable() {
-          @Override
-          public void run() {
-            cosServices.put(key, service);
-            promise.resolve(null);
-          }
-        });
-      }
-    });
+    CosXmlService service = buildCosXmlService(reactContext, config);
+    cosServices.put(key, service);
+    promise.resolve(null);
   }
 
   @ReactMethod
@@ -292,23 +253,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (key.isEmpty()) {
       promise.reject(new IllegalArgumentException("register key cannot be empty"));
     }
-    COMMAND_EXECUTOR.execute(new Runnable() {
-      @Override
-      public void run() {
-        TransferManager transferManager = buildTransferManager(reactContext, config, transferConfig);
-        runMainThread(new Runnable() {
-          @Override
-          public void run() {
-            transferManagers.put(key, transferManager);
-            promise.resolve(null);
-          }
-        });
-      }
-    });
+    TransferManager transferManager = buildTransferManager(reactContext, config, transferConfig);
+    transferManagers.put(key, transferManager);
+    promise.resolve(null);
   }
 
   @ReactMethod
-  public void headObject(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String region, @Nullable String versionId, final Promise promise) {
+  public void headObject(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String region, @Nullable String versionId, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     HeadObjectRequest headObjectRequest = new HeadObjectRequest(
       bucket, cosPath);
@@ -318,6 +269,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (versionId != null) {
       headObjectRequest.setVersionId(versionId);
     }
+    setRequestCredential(credentials, headObjectRequest);
     service.headObjectAsync(headObjectRequest, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -343,7 +295,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void deleteObject(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String region, @Nullable String versionId, final Promise promise) {
+  public void deleteObject(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String region, @Nullable String versionId, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(
       bucket, cosPath);
@@ -353,7 +305,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (versionId != null) {
       deleteObjectRequest.setVersionId(versionId);
     }
-
+    setRequestCredential(credentials, deleteObjectRequest);
     service.deleteObjectAsync(deleteObjectRequest, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -382,7 +334,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   @ReactMethod
   public void getPresignedUrl(@NonNull String serviceKey, @NonNull String bucket, @NonNull String cosPath, @Nullable String signValidTime,
                               @Nullable String signHost, @Nullable ReadableMap parameters,
-                              @Nullable String region, final Promise promise) {
+                              @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     PresignedUrlRequest presignedUrlRequest = new PresignedUrlRequest(bucket, cosPath);
     presignedUrlRequest.setRequestMethod("GET");
@@ -404,15 +356,14 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (region != null) {
       presignedUrlRequest.setRegion(region);
     }
-    TaskExecutors.COMMAND_EXECUTOR.execute(() -> {
-      try {
-        String urlWithSign = service.getPresignedURL(presignedUrlRequest);
-        promise.resolve(urlWithSign);
-      } catch (CosXmlClientException e) {
-        e.printStackTrace();
-        promise.reject(e);
-      }
-    });
+    setRequestCredential(credentials, presignedUrlRequest);
+    try {
+      String urlWithSign = service.getPresignedURL(presignedUrlRequest);
+      promise.resolve(urlWithSign);
+    } catch (CosXmlClientException e) {
+      e.printStackTrace();
+      promise.reject(e);
+    }
   }
 
   @ReactMethod
@@ -438,9 +389,10 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getService(@NonNull String serviceKey, final Promise promise) {
+  public void getService(@NonNull String serviceKey, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     GetServiceRequest request = new GetServiceRequest();
+    setRequestCredential(credentials, request);
     service.getServiceAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -468,7 +420,8 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable String prefix, @Nullable String delimiter, @Nullable String encodingType, @Nullable String marker, @Nullable String maxKeys, final Promise promise) {
+  public void getBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable String prefix, @Nullable String delimiter,
+                        @Nullable String encodingType, @Nullable String marker, @Nullable String maxKeys, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     GetBucketRequest request = new GetBucketRequest(bucket);
     if (region != null) {
@@ -489,6 +442,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (maxKeys != null) {
       request.setMaxKeys(Long.parseLong(maxKeys));
     }
+    setRequestCredential(credentials, request);
     service.getBucketAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -517,7 +471,8 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void putBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable String enableMAZ, @Nullable String cosacl, @Nullable String readAccount, @Nullable String writeAccount, @Nullable String readWriteAccount, final Promise promise) {
+  public void putBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable String enableMAZ, @Nullable String cosacl,
+                        @Nullable String readAccount, @Nullable String writeAccount, @Nullable String readWriteAccount, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     PutBucketRequest request = new PutBucketRequest(bucket);
     if (region != null) {
@@ -538,6 +493,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (readWriteAccount != null) {
       request.setXCOSReadWrite(readWriteAccount);
     }
+    setRequestCredential(credentials, request);
     service.putBucketAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -558,12 +514,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void headBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, final Promise promise) {
+  public void headBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     HeadBucketRequest request = new HeadBucketRequest(bucket);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.headBucketAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -589,12 +546,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void deleteBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, final Promise promise) {
+  public void deleteBucket(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     DeleteBucketRequest request = new DeleteBucketRequest(bucket);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.deleteBucketAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -615,12 +573,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getBucketAccelerate(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, final Promise promise) {
+  public void getBucketAccelerate(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     GetBucketAccelerateRequest request = new GetBucketAccelerateRequest(bucket);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.getBucketAccelerateAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -651,12 +610,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void putBucketAccelerate(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @NonNull Boolean enable, final Promise promise) {
+  public void putBucketAccelerate(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @NonNull Boolean enable, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     PutBucketAccelerateRequest request = new PutBucketAccelerateRequest(bucket, enable);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.putBucketAccelerateAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -677,12 +637,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getBucketLocation(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, final Promise promise) {
+  public void getBucketLocation(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     GetBucketLocationRequest request = new GetBucketLocationRequest(bucket);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.getBucketLocationAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -709,12 +670,13 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void getBucketVersioning(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, final Promise promise) {
+  public void getBucketVersioning(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     GetBucketVersioningRequest request = new GetBucketVersioningRequest(bucket);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.getBucketVersioningAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -745,13 +707,14 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
-  public void putBucketVersioning(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @NonNull Boolean enable, final Promise promise) {
+  public void putBucketVersioning(@NonNull String serviceKey, @NonNull String bucket, @Nullable String region, @NonNull Boolean enable, @Nullable ReadableMap credentials, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     PutBucketVersioningRequest request = new PutBucketVersioningRequest(bucket);
     request.setEnableVersion(enable);
     if (region != null) {
       request.setRegion(region);
     }
+    setRequestCredential(credentials, request);
     service.putBucketVersionAsync(request, new CosXmlResultListener() {
       @Override
       public void onSuccess(CosXmlRequest cosXmlRequest, CosXmlResult cosXmlResult) {
@@ -816,6 +779,156 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void enableLogcat(@NonNull Boolean enable, final Promise promise) {
+    COSLogger.enableLogcat(enable);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void enableLogFile(@NonNull Boolean enable, final Promise promise) {
+    COSLogger.enableLogFile(enable);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void addLogListener(String key, final Promise promise) {
+    CosLogListener listener = entity -> {
+      if (!TextUtils.isEmpty(key)) {
+        runMainThread(() -> {
+          WritableMap params = Arguments.createMap();
+          params.putString("key", key);
+          params.putString("logEntityJson", gson.toJson(entity));
+          reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+            .emit(Constants.COS_EMITTER_LOG_CALLBACK, params);
+        });
+      }
+    };
+    cosLogListenerMap.put(key, listener);
+    COSLogger.addLogListener(listener);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void removeLogListener(String key, final Promise promise) {
+    cosLogListenerMap.remove(key);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setMinLevel(@NonNull int minLevel, final Promise promise) {
+    COSLogger.setMinLevel(LogLevel.values()[minLevel]);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setLogcatMinLevel(@NonNull int minLevel, final Promise promise) {
+    COSLogger.setLogcatMinLevel(LogLevel.values()[minLevel]);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setFileMinLevel(@NonNull int minLevel, final Promise promise) {
+    COSLogger.setFileMinLevel(LogLevel.values()[minLevel]);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setClsMinLevel(@NonNull int minLevel, final Promise promise) {
+    COSLogger.setClsMinLevel(LogLevel.values()[minLevel]);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setDeviceID(@NonNull String deviceID, final Promise promise) {
+    COSLogger.setDeviceID(deviceID);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setDeviceModel(@NonNull String deviceModel, final Promise promise) {
+    COSLogger.setDeviceModel(deviceModel);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setAppVersion(@NonNull String appVersion, final Promise promise) {
+    COSLogger.setAppVersion(appVersion);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setExtras(@NonNull ReadableMap extras, final Promise promise) {
+    Map<String, String> parametersMap = new HashMap<>();
+      ReadableMapKeySetIterator iterator = extras.keySetIterator();
+      while (iterator.hasNextKey()) {
+        String key = iterator.nextKey();
+        parametersMap.put(key, extras.getString(key));
+      }
+    COSLogger.setExtras(parametersMap);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setLogFileEncryptionKey(@NonNull ReadableArray keyArray, @NonNull ReadableArray ivArray, final Promise promise) {
+    // 将 ReadableArray 转换为 byte[]
+    byte[] key = convertReadableArrayToByteArray(keyArray);
+    byte[] iv = convertReadableArrayToByteArray(ivArray);
+
+    COSLogger.setLogFileEncryptionKey(key, iv);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void getLogRootDir(final Promise promise) {
+    promise.resolve(COSLogger.getLogRootDir());
+  }
+
+  @ReactMethod
+  public void setCLsChannelAnonymous(@NonNull String topicId, @NonNull String endpoint, final Promise promise) {
+    COSLogger.setCLsChannel(topicId, endpoint);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setCLsChannelStaticKey(@NonNull String topicId, @NonNull String endpoint, @NonNull String secretId, @NonNull String secretKey, final Promise promise) {
+    COSLogger.setCLsChannel(topicId, endpoint, secretId, secretKey);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void setCLsChannelSessionCredential(@NonNull String topicId, @NonNull String endpoint, final Promise promise) {
+    qClsLifecycleCredentialProvider = new BridgeClsLifecycleCredentialProvider(reactContext);
+    COSLogger.setCLsChannel(topicId, endpoint, qClsLifecycleCredentialProvider);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void updateCLsChannelSessionCredential(ReadableMap credentials, final Promise promise) {
+    if (qClsLifecycleCredentialProvider != null && qClsLifecycleCredentialProvider instanceof BridgeClsLifecycleCredentialProvider) {
+      ClsSessionCredentials sessionQCloudCredentials = new ClsSessionCredentials(
+        credentials.getString("tmpSecretId"),
+        credentials.getString("tmpSecretKey"),
+        credentials.getString("sessionToken"),
+        (long) credentials.getDouble("expiredTime")
+      );
+      ((BridgeClsLifecycleCredentialProvider) qClsLifecycleCredentialProvider).setNewCredentials(sessionQCloudCredentials);
+    }
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void addSensitiveRule(@NonNull String ruleName, @NonNull String regex, final Promise promise) {
+    COSLogger.addSensitiveRule(ruleName, regex);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void removeSensitiveRule(@NonNull String ruleName, final Promise promise) {
+    COSLogger.removeSensitiveRule(ruleName);
+    promise.resolve(null);
+  }
+
+  @ReactMethod
   public void cancelAll(@NonNull String serviceKey, final Promise promise) {
     CosXmlService service = getCosXmlService(serviceKey);
     service.cancelAll();
@@ -875,53 +988,44 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       serviceConfigBuilder.setUserAgentExtended("ReactNativePlugin");
     }
 
-    synchronized (credentialProviderLock) {
-      if (qCloudCredentialProvider == null) {
-        try {
-          credentialProviderLock.wait(15000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
-    }
-
+    CosXmlService cosXmlService;
     if (qCloudCredentialProvider == null) {
-      throw new IllegalArgumentException("Please call method initWithPlainSecret or initWithSessionCredentialCallback first");
+      cosXmlService = new CosXmlService(context, serviceConfigBuilder.builder());
     } else {
-      CosXmlService cosXmlService = new CosXmlService(context, serviceConfigBuilder.builder(), qCloudCredentialProvider);
-      if(dnsMap != null) {
-        try {
-          for (String domain: dnsMap.keySet()) {
-            if(dnsMap.get(domain) != null && dnsMap.get(domain).length > 0){
-              cosXmlService.addCustomerDNS(domain, dnsMap.get(domain));
-            }
-          }
-        } catch (CosXmlClientException e) {
-          e.printStackTrace();
-        }
-      }
-      if(initDnsFetch){
-        cosXmlService.addCustomerDNSFetch(domain -> {
-          // 发送获取ips的通知
-          reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-            .emit(Constants.COS_EMITTER_DNS_FETCH, domain);
-          // 加锁等待
-          synchronized (fetchDnsWaitingLock) {
-            try {
-              fetchDnsWaitingLock.wait(15000);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
-            }
-          }
-          if(fetchMapCache.containsKey(domain)){
-            return fetchMapCache.get(domain);
-          } else {
-            return null;
-          }
-        });
-      }
-      return cosXmlService;
+      cosXmlService = new CosXmlService(context, serviceConfigBuilder.builder(), qCloudCredentialProvider);
     }
+    if(dnsMap != null) {
+      try {
+        for (String domain: dnsMap.keySet()) {
+          if(dnsMap.get(domain) != null && dnsMap.get(domain).length > 0){
+            cosXmlService.addCustomerDNS(domain, dnsMap.get(domain));
+          }
+        }
+      } catch (CosXmlClientException e) {
+        e.printStackTrace();
+      }
+    }
+    if(initDnsFetch){
+      cosXmlService.addCustomerDNSFetch(domain -> {
+        // 发送获取ips的通知
+        reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+          .emit(Constants.COS_EMITTER_DNS_FETCH, domain);
+        // 加锁等待
+        synchronized (fetchDnsWaitingLock) {
+          try {
+            fetchDnsWaitingLock.wait(15000);
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+        }
+        if(fetchMapCache.containsKey(domain)){
+          return fetchMapCache.get(domain);
+        } else {
+          return null;
+        }
+      });
+    }
+    return cosXmlService;
   }
 
   private TransferManager getTransferManager(String transferKey) {
@@ -967,6 +1071,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     @Nullable String stroageClass,
     @Nullable String trafficLimit,
     @Nullable String region,
+    @Nullable ReadableMap credentials,
     final Promise promise
   ) {
     TransferManager transferManager = getTransferManager(transferKey);
@@ -980,6 +1085,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (trafficLimit != null) {
       request.setTrafficLimit(Long.parseLong(trafficLimit));
     }
+    setRequestCredential(credentials, request);
     COSXMLUploadTask task = transferManager.upload(request, uploadId);
     setTaskListener(task, transferKey, resultCallbackKey, stateCallbackKey, progressCallbackKey, InitMultipleUploadCallbackKey);
     String taskKey = String.valueOf(task.hashCode());
@@ -999,6 +1105,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     @Nullable String versionId,
     @Nullable String trafficLimit,
     @Nullable String region,
+    @Nullable ReadableMap credentials,
     final Promise promise
   ) {
     TransferManager transferManager = getTransferManager(transferKey);
@@ -1015,6 +1122,7 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     if (trafficLimit != null) {
       request.setTrafficLimit(Long.parseLong(trafficLimit));
     }
+    setRequestCredential(credentials, request);
     COSXMLDownloadTask task = transferManager.download(reactContext, request);
     setTaskListener(task, transferKey, resultCallbackKey, stateCallbackKey, progressCallbackKey, null);
     String taskKey = String.valueOf(task.hashCode());
@@ -1184,6 +1292,21 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
     }
   }
 
+  // 转换工具方法
+  private byte[] convertReadableArrayToByteArray(ReadableArray array) {
+    if (array == null || array.size() == 0) {
+        return new byte[0];
+    }
+
+    byte[] bytes = new byte[array.size()];
+    for (int i = 0; i < array.size(); i++) {
+        // Uint8Array 的数值范围是 0-255，转换为 byte 的 -128~127
+        int value = array.getInt(i);
+        bytes[i] = (byte) (value & 0xFF);
+    }
+    return bytes;
+  }
+
   private WritableMap simplifyHeader(Map<String, List<String>> headers) {
     if (headers == null) return null;
 
@@ -1208,5 +1331,27 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   }
   @ReactMethod
   public void removeListeners(Integer count) {
+  }
+
+  private void setRequestCredential(@Nullable ReadableMap sessionCredentials, @NonNull CosXmlRequest request){
+    if (sessionCredentials != null){
+      SessionQCloudCredentials credentials;
+      if (!sessionCredentials.hasKey("startTime")) {
+        credentials = new SessionQCloudCredentials(
+          sessionCredentials.getString("tmpSecretId"),
+          sessionCredentials.getString("tmpSecretKey"),
+          sessionCredentials.getString("sessionToken"),
+          (long) sessionCredentials.getDouble("expiredTime"));
+      } else {
+        credentials = new SessionQCloudCredentials(
+          sessionCredentials.getString("tmpSecretId"),
+          sessionCredentials.getString("tmpSecretKey"),
+          sessionCredentials.getString("sessionToken"),
+          (long) sessionCredentials.getDouble("startTime"),
+          (long) sessionCredentials.getDouble("expiredTime"));
+      }
+      Log.d("setRequestCredential", "setCredential: " + credentials.toString());
+      request.setCredential(credentials);
+    }
   }
 }

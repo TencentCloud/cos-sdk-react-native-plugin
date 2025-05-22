@@ -4,9 +4,9 @@ import Toast from 'react-native-toast-message';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { StyleSheet, View, Text, FlatList, RefreshControl, ActivityIndicator, TouchableHighlight, StatusBar, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getErrorMessage, readableStorageSize, toDateTimeString } from '../Utils';
+import { getErrorMessage, getSessionCredentials, readableStorageSize, toDateTimeString } from '../Utils';
 import { ObjectEntity } from './ObjectEntity';
-import type { CosService } from 'src/cos_service';
+import type { CosService } from 'react-native-cos-sdk';
 import type { RootStackParamList } from '../App';
 import {
   SafeAreaInsetsContext
@@ -69,6 +69,8 @@ export class ObjectListScreen extends React.Component<Props> {
       await cosService.deleteObject(
         this.props.route.params.bucketName,
         data.getContent()!.key,
+        null, null,
+        await getSessionCredentials()
       );
       this.setState({
         isPopupLoading: false
@@ -148,7 +150,8 @@ export class ObjectListScreen extends React.Component<Props> {
         {
           prefix: this.props.route.params.folderPath,
           delimiter: "/",
-          maxKeys: 100
+          maxKeys: 100,
+          sessionCredentials: await getSessionCredentials()
         }
       );
       this.isTruncated = bucketContents.isTruncated;

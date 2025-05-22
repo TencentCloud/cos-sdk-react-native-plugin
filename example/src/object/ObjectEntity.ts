@@ -1,4 +1,4 @@
-import type { BucketContents, CommonPrefixes, Content } from "src/data_model/object";
+import type { BucketContents, CommonPrefixes, Content } from 'react-native-cos-sdk';
 
 export class ObjectEntity {
     private isFolder: boolean;

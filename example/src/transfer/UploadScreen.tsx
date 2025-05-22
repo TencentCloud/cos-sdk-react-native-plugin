@@ -3,19 +3,17 @@ import Toast from 'react-native-toast-message';
 import Cos from 'react-native-cos-sdk';
 import { StyleSheet, View, Text, Button, StatusBar, TouchableOpacity } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { getCosXmlClientErrorMessage, getCosXmlServiceErrorMessage, getErrorMessage } from '../Utils';
+import { getCosXmlClientErrorMessage, getCosXmlServiceErrorMessage, getErrorMessage, getSessionCredentials } from '../Utils';
 import type { RootStackParamList } from '../App';
 import {
   SafeAreaInsetsContext
 } from 'react-native-safe-area-context';
-import DocumentPicker, {
-  isInProgress,
-} from 'react-native-document-picker'
-import type { CosTransferManger, TransferTask } from '../../../src/cos_transfer';
-import { TransferState } from '../../../src/data_model/enums';
+import { pick } from '@react-native-documents/picker'
+import type { CosTransferManger, TransferTask } from 'react-native-cos-sdk';
+import { TransferState } from 'react-native-cos-sdk';
 import { TransferProgressView } from './TransferProgressView';
 import { createRef } from 'react';
-import type { CosXmlClientError, CosXmlServiceError } from 'src/data_model/errors';
+import type { CosXmlClientError, CosXmlServiceError } from 'react-native-cos-sdk';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Upload'>;
 export class UploadScreen extends React.Component<Props> {
@@ -36,13 +34,14 @@ export class UploadScreen extends React.Component<Props> {
       headerRight: () => (
         <TouchableOpacity onPress={async () => {
           try {
-            const pickerResult = await DocumentPicker.pickSingle()
+            // const pickerResult = await DocumentPicker.pickSingle()
+            const [pickResult] = await pick()
             this.setState({
-              pickFilePath: pickerResult.uri,
-              pickFileName: pickerResult.name
+              pickFilePath: pickResult.uri,
+              pickFileName: pickResult.name
             });
           } catch (e) {
-            this.handleDocumentPickerError(e);
+            // this.handleDocumentPickerError(e);
           }
         }
         }>
@@ -52,16 +51,16 @@ export class UploadScreen extends React.Component<Props> {
     });
   };
 
-  handleDocumentPickerError(err: unknown) {
-    if (DocumentPicker.isCancel(err)) {
-      console.warn('cancelled')
-      // User cancelled the picker, exit any dialogs or menus and move on
-    } else if (isInProgress(err)) {
-      console.warn('multiple pickers were opened, only the last will be considered')
-    } else {
-      throw err
-    }
-  }
+  // handleDocumentPickerError(err: unknown) {
+  //   if (DocumentPicker.isCancel(err)) {
+  //     console.warn('cancelled')
+  //     // User cancelled the picker, exit any dialogs or menus and move on
+  //   } else if (isInProgress(err)) {
+  //     console.warn('multiple pickers were opened, only the last will be considered')
+  //   } else {
+  //     throw err
+  //   }
+  // }
 
   async getTransferManger(): Promise<CosTransferManger> {
     if (this.cosTransferManger == undefined) {
@@ -126,6 +125,7 @@ export class UploadScreen extends React.Component<Props> {
       //上传进度回调
       let progressCallBack = (complete: number, target: number) => {
         this.myTransferProgressView.current?.changeTransferProgress(complete, target);
+        console.log(`已完成：${complete} 总共：${target}`);
       };
       //初始化分块完成回调
       let initMultipleUploadCallBack = (bucket: string, cosKey: string, uploadId: string) => {
@@ -144,6 +144,7 @@ export class UploadScreen extends React.Component<Props> {
           stateCallback: stateCallBack,
           progressCallback: progressCallBack,
           initMultipleUploadCallback: initMultipleUploadCallBack,
+          sessionCredentials: await getSessionCredentials()
         }
       );
     } catch (e) {
@@ -188,12 +189,12 @@ export class UploadScreen extends React.Component<Props> {
               <View style={{ width: 20 }} />
               <View style={styles.button}>
                 <Button
-                  title={this.state.state == TransferState.PAUSED ? "恢复" : "暂停"}
+                  title={this.state.state == 'PAUSED' ? "恢复" : "暂停"}
                   onPress={async () => {
                     try {
-                      if (this.state.state == TransferState.PAUSED) {
+                      if (this.state.state == 'PAUSED') {
                         await this.transferTask?.resume();
-                      } else if (this.state.state == TransferState.IN_PROGRESS) {
+                      } else if (this.state.state == 'IN_PROGRESS') {
                         await this.transferTask?.pause();
                       }
                     } catch (e) {
@@ -215,7 +216,7 @@ export class UploadScreen extends React.Component<Props> {
   }
 
   async componentWillUnmount() {
-    if (this.state.state == TransferState.IN_PROGRESS) {
+    if (this.state.state == 'IN_PROGRESS') {
       try {
         await this.transferTask?.pause();
       } catch (e) {

@@ -6,7 +6,7 @@ import type { RootStackParamList } from '../App';
 import {
   SafeAreaInsetsContext
 } from 'react-native-safe-area-context';
-import type { BucketContents } from 'src/data_model/object';
+import type { BucketContents } from 'react-native-cos-sdk';
 import Cos from 'react-native-cos-sdk';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Test'>;

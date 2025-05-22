@@ -12,7 +12,10 @@
 #endif /* CosSignatureProvider_h */
 
 #import <QCloudCOSXML/QCloudCOSXML.h>
+#import <QCloudCore/QCloudCredential.h>
 #import "pigeon.h"
+
+typedef QCloudCredential *_Nullable(^ClsCredentialCallback)();
 
 NS_ASSUME_NONNULL_BEGIN
 

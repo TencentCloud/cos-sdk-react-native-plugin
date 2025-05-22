@@ -4,16 +4,16 @@ import Cos from 'react-native-cos-sdk';
 import { StyleSheet, View, Text, Button, StatusBar } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { DocumentDirectoryPath } from 'react-native-fs'
-import { getCosXmlClientErrorMessage, getCosXmlServiceErrorMessage, getErrorMessage } from '../Utils';
+import { getCosXmlClientErrorMessage, getCosXmlServiceErrorMessage, getErrorMessage, getSessionCredentials } from '../Utils';
 import type { RootStackParamList } from '../App';
 import {
   SafeAreaInsetsContext
 } from 'react-native-safe-area-context';
-import type { CosTransferManger, TransferTask } from '../../../src/cos_transfer';
-import { TransferState } from '../../../src/data_model/enums';
+import type { CosTransferManger, TransferTask } from 'react-native-cos-sdk';
+import { TransferState } from 'react-native-cos-sdk';
 import { TransferProgressView } from './TransferProgressView';
 import { createRef } from 'react';
-import type { CosXmlClientError, CosXmlServiceError } from 'src/data_model/errors';
+import type { CosXmlClientError, CosXmlServiceError } from 'react-native-cos-sdk';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Download'>;
 export class DownloadScreen extends React.Component<Props> {
@@ -88,7 +88,8 @@ export class DownloadScreen extends React.Component<Props> {
             failCallBack: failCallBack
           },
           stateCallback: stateCallBack,
-          progressCallback: progressCallBack
+          progressCallback: progressCallBack,
+          sessionCredentials: await getSessionCredentials()
         }
       );
     } catch (e) {
@@ -131,12 +132,12 @@ export class DownloadScreen extends React.Component<Props> {
               <View style={{ width: 20 }} />
               <View style={styles.button}>
                 <Button
-                  title={this.state.state == TransferState.PAUSED ? "恢复" : "暂停"}
+                  title={this.state.state == 'PAUSED' ? "恢复" : "暂停"}
                   onPress={async () => {
                     try {
-                      if (this.state.state == TransferState.PAUSED) {
+                      if (this.state.state == 'PAUSED') {
                         await this.transferTask?.resume();
-                      } else if (this.state.state == TransferState.IN_PROGRESS) {
+                      } else if (this.state.state == 'IN_PROGRESS') {
                         await this.transferTask?.pause();
                       }
                     } catch (e) {
@@ -158,7 +159,7 @@ export class DownloadScreen extends React.Component<Props> {
   }
 
   async componentWillUnmount() {
-    if (this.state.state == TransferState.IN_PROGRESS) {
+    if (this.state.state == 'IN_PROGRESS') {
       try {
         await this.transferTask?.pause();
       } catch (e) {
