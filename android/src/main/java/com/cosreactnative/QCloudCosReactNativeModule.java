@@ -71,6 +71,7 @@ import com.tencent.qcloud.core.auth.ShortTimeCredentialProvider;
 import com.tencent.qcloud.core.logger.COSLogger;
 import com.tencent.qcloud.core.logger.LogLevel;
 import com.tencent.qcloud.core.logger.channel.CosLogListener;
+import com.tencent.qcloud.core.task.TaskExecutors;
 import com.tencent.qcloud.track.cls.ClsLifecycleCredentialProvider;
 import com.tencent.qcloud.track.cls.ClsSessionCredentials;
 
@@ -80,6 +81,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 @ReactModule(name = QCloudCosReactNativeModule.NAME)
 public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
@@ -99,6 +103,8 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
   private final Map<String, CosLogListener> cosLogListenerMap = new HashMap<>();
   private ClsLifecycleCredentialProvider qClsLifecycleCredentialProvider = null;
 
+  public static ThreadPoolExecutor COMMAND_EXECUTOR = null;
+
   // 静态配置自定义dns
   private Map<String, String[]> dnsMap = null;
   // 动态dns fetch
@@ -111,6 +117,9 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
 
     this.reactContext = reactContext;
     CosXmlBaseService.BRIDGE = "ReactNative";
+
+    COMMAND_EXECUTOR = new ThreadPoolExecutor(2, 10, 5L,
+      TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE));
   }
 
   @Override
@@ -357,13 +366,15 @@ public class QCloudCosReactNativeModule extends ReactContextBaseJavaModule {
       presignedUrlRequest.setRegion(region);
     }
     setRequestCredential(credentials, presignedUrlRequest);
-    try {
-      String urlWithSign = service.getPresignedURL(presignedUrlRequest);
-      promise.resolve(urlWithSign);
-    } catch (CosXmlClientException e) {
-      e.printStackTrace();
-      promise.reject(e);
-    }
+    TaskExecutors.COMMAND_EXECUTOR.execute(() -> {
+      try {
+        String urlWithSign = service.getPresignedURL(presignedUrlRequest);
+        promise.resolve(urlWithSign);
+      } catch (CosXmlClientException e) {
+        e.printStackTrace();
+        promise.reject(e);
+      }
+    });
   }
 
   @ReactMethod

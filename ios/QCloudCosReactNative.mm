@@ -1213,7 +1213,11 @@ RCT_REMAP_METHOD(pause,
         }
         NSError *error;
         put.resmeData = [put cancelByProductingResumeData:&error];
-        [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:QCloudCOS_STATE_PAUSED];
+        if (put.resmeData){
+            [self stateCallback:transferKey stateCallbackKey:[put stateCallbackKey] state:QCloudCOS_STATE_PAUSED];
+        }else{
+            NSLog(@"UnsupportOperation:无法暂停当前的上传请求，因为complete请求已经发出");
+        }
         resolve(nil);
     } else if ([taskId hasPrefix:@"download-"]){
         QCloudCOSXMLDownloadObjectRequest* request = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -1436,8 +1440,7 @@ RCT_REMAP_METHOD(upload,
             if(error == nil){
                 NSDictionary* headerAll = [[result __originHTTPURLResponse__] allHeaderFields];
                 NSMutableDictionary* resultDictionary = [NSMutableDictionary new];
-                NSString* encodedAccessUrl = [result.location stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-                [resultDictionary setObject:encodedAccessUrl?:@"" forKey:@"accessUrl"];
+                [resultDictionary setObject:result.location?:@"" forKey:@"accessUrl"];
                 [resultDictionary setObject:result.eTag?:@"" forKey:@"eTag"];
                 NSString* crc64ecma = [headerAll objectForKey: @"x-cos-hash-crc64ecma"];
                 if(crc64ecma){
