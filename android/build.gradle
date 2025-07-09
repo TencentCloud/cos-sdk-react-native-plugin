@@ -77,7 +77,7 @@ dependencies {
 //  implementation(name: 'qcloud-foundation-1.5.55', ext: 'aar')
 //  implementation(name: 'cos-android-nobeacon-5.9.13', ext: 'aar')
 
-  implementation 'com.qcloud.cos:cos-android:5.9.43'
+  implementation 'com.qcloud.cos:cos-android:5.9.46'
   implementation 'com.google.code.gson:gson:2.10.1'
 }
 
