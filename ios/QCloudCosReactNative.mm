@@ -232,9 +232,9 @@ QCloudThreadSafeMutableDictionary *QCloudCOSTaskStateCache() {
 }
 
 RCT_REMAP_METHOD(initWithPlainSecret,
-                 initWithPlainSecretSecretId:(NSString *)secretId secretKey:(NSString *)secretKey
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 initWithPlainSecret:(NSString *)secretId secretKey:(NSString *)secretKey
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     permanentSecretId = secretId;
     permanentSecretKey = secretKey;
     signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
@@ -242,25 +242,25 @@ RCT_REMAP_METHOD(initWithPlainSecret,
 }
 
 RCT_REMAP_METHOD(initWithSessionCredentialCallback,
-                 initWithSessionCredentialCallbackWithResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 initWithSessionCredentialCallback:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     isScopeLimitCredential = false;
     signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(initWithScopeLimitCredentialCallback,
-                 initWithScopeLimitCredentialCallbackWithResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 initWithScopeLimitCredentialCallback:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     isScopeLimitCredential = true;
     signatureProvider = [CosPluginSignatureProvider makeWithSecretId:permanentSecretId secretKey:permanentSecretKey isScopeLimitCredential:isScopeLimitCredential];
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(initCustomerDNS,
-                 initCustomerDNSWithDns:(NSArray *) dnsArray
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 initCustomerDNS:(NSArray *) dnsArray
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
 
     [dnsArray enumerateObjectsUsingBlock:^(NSDictionary * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSArray *ipsArray = [obj objectForKey:@"ips"];
@@ -277,8 +277,8 @@ RCT_REMAP_METHOD(initCustomerDNS,
 }
 
 RCT_REMAP_METHOD(initCustomerDNSFetch,
-                 initCustomerDNSFetchWithResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 initCustomerDNSFetch:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     [QCloudHttpDNS shareDNS].delegate = self;
     initDnsFetch = YES;
     resolve(nil);
@@ -305,7 +305,7 @@ RCT_REMAP_METHOD(initCustomerDNSFetch,
     return ip;
 }
 
-RCT_REMAP_METHOD(setDNSFetchIps, setDNSFetchIpsDomain:(NSString *)domain ips:(NSArray *)ips promise:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
+RCT_REMAP_METHOD(setDNSFetchIps, setDNSFetchIps:(NSString *)domain ips:(NSArray *)ips resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 {
     if(ips && domain){
         [self.dnsMap setObject:ips forKey:domain];
@@ -318,8 +318,8 @@ RCT_REMAP_METHOD(setDNSFetchIps, setDNSFetchIpsDomain:(NSString *)domain ips:(NS
 }
 
 RCT_REMAP_METHOD(forceInvalidationCredential,
-                 forceInvalidationCredentialWithResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 forceInvalidationCredential:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     if(signatureProvider){
         [signatureProvider forceInvalidationCredential];
     }
@@ -329,8 +329,8 @@ RCT_REMAP_METHOD(forceInvalidationCredential,
 RCT_REMAP_METHOD(updateSessionCredential,
                  updateSessionCredential:( NSDictionary *)credential
                  stsScopesKey:(nullable NSString *)jsonifyScopes
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [signatureProvider setNewCredential: [self transferCredential:credential] jsonifyScopes:jsonifyScopes];
 
@@ -338,17 +338,17 @@ RCT_REMAP_METHOD(updateSessionCredential,
 }
 
 RCT_REMAP_METHOD(registerDefaultService,
-                 registerDefaultServiceConfig:(nonnull NSDictionary *)config
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 registerDefaultService:(nonnull NSDictionary *)config
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     [QCloudCOSXMLService registerDefaultCOSXMLWithConfiguration: [self buildConfiguration: config]];
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(registerDefaultTransferManger,
-                 registerDefaultTransferMangerConfig:(nonnull NSDictionary *)config transferConfig:(nullable NSDictionary *)transferConfig
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 registerDefaultTransferManger:(nonnull NSDictionary *)config transferConfig:(nullable NSDictionary *)transferConfig
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     [QCloudCOSTransferMangerService registerDefaultCOSTransferMangerWithConfiguration: [self buildConfiguration: config]];
     if(transferConfig){
         [QCloudCOSTransferConfigCache() setObject:transferConfig forKey:QCloudCOS_DEFAULT_KEY];
@@ -358,17 +358,17 @@ RCT_REMAP_METHOD(registerDefaultTransferManger,
 }
 
 RCT_REMAP_METHOD(registerService,
-                 registerServiceKey:(nonnull NSString *)key config:(nonnull NSDictionary *)config
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 registerService:(nonnull NSString *)key config:(nonnull NSDictionary *)config
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     [QCloudCOSXMLService registerCOSXMLWithConfiguration: [self buildConfiguration: config] withKey: key];
     resolve(nil);
 }
 
 RCT_REMAP_METHOD(registerTransferManger,
-                 registerTransferMangerKey:(nonnull NSString *)key config:(nonnull NSDictionary *)config transferConfig:(nullable NSDictionary *)transferConfig
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject){
+                 registerTransferManger:(nonnull NSString *)key config:(nonnull NSDictionary *)config transferConfig:(nullable NSDictionary *)transferConfig
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject){
     [QCloudCOSTransferMangerService registerCOSTransferMangerWithConfiguration: [self buildConfiguration: config] withKey: key];
     if(transferConfig){
         [QCloudCOSTransferConfigCache() setObject:transferConfig forKey:key];
@@ -377,9 +377,9 @@ RCT_REMAP_METHOD(registerTransferManger,
 }
 
 RCT_REMAP_METHOD(setCloseBeacon,
-                 setCloseBeaconIsCloseBeacon:(nonnull NSNumber *)isCloseBeacon
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setCloseBeacon:(BOOL)isCloseBeacon
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     //iOS不支持关闭灯塔
     NSLog(@"iOS does not support");
@@ -389,11 +389,11 @@ RCT_REMAP_METHOD(setCloseBeacon,
 
 // 日志控制类方法
 RCT_REMAP_METHOD(enableLogcat,
-                 enableLogcatEnable:(nonnull NSNumber *)enable
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 enableLogcat:(BOOL)enable
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
-    if (enable.integerValue > 0) {
+    if (enable) {
         QCloudLogger.sharedLogger.logLevel = QCloudLogLevelVerbose;
     }else{
         QCloudLogger.sharedLogger.logLevel = QCloudLogLevelNone;
@@ -402,11 +402,11 @@ RCT_REMAP_METHOD(enableLogcat,
 }
 
 RCT_REMAP_METHOD(enableLogFile,
-                 enableLogFileEnable:(nonnull NSNumber *)enable
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 enableLogFile:(BOOL)enable
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
-  if (enable.integerValue > 0) {
+  if (enable) {
       QCloudLogger.sharedLogger.logFileLevel = QCloudLogLevelVerbose;
   }else{
       QCloudLogger.sharedLogger.logFileLevel = QCloudLogLevelNone;
@@ -416,9 +416,9 @@ RCT_REMAP_METHOD(enableLogFile,
 
 // 日志监听管理
 RCT_REMAP_METHOD(addLogListener,
-                 addLogListenerKey:(nonnull NSString *)key
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 addLogListener:(nonnull NSString *)key
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     @synchronized (self) {
        QCloudCustomLoggerOutput * output = [[QCloudCustomLoggerOutput alloc]init];
@@ -443,9 +443,9 @@ RCT_REMAP_METHOD(addLogListener,
 }
 
 RCT_REMAP_METHOD(removeLogListener,
-                 removeLogListenerKey:(nonnull NSString *)key
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 removeLogListener:(nonnull NSString *)key
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
      @synchronized (self) {
          QCloudCustomLoggerOutput * output = [self.logCallbackMap objectForKey:key];
@@ -456,9 +456,9 @@ RCT_REMAP_METHOD(removeLogListener,
 
 // 日志级别控制
 RCT_REMAP_METHOD(setMinLevel,
-                 setMinLevelMinLevel:(NSInteger)minLevel
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setMinLevel:(NSInteger)minLevel
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [QCloudLogger sharedLogger].logLevel = (QCloudLogLevel)(7 - minLevel);
     [QCloudLogger sharedLogger].logClsLevel = (QCloudLogLevel)(7 - minLevel);
@@ -467,27 +467,27 @@ RCT_REMAP_METHOD(setMinLevel,
 }
 
 RCT_REMAP_METHOD(setLogcatMinLevel,
-                 setLogcatMinLevelMinLevel:(NSInteger)minLevel
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setLogcatMinLevel:(NSInteger)minLevel
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [QCloudLogger sharedLogger].logLevel = (QCloudLogLevel)(7 - minLevel);
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(setFileMinLevel,
-                 setFileMinLevelMinLevel:(NSInteger)minLevel
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setFileMinLevel:(NSInteger)minLevel
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [QCloudLogger sharedLogger].logFileLevel = (QCloudLogLevel)(7 - minLevel);
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(setClsMinLevel,
-                 setClsMinLevelMinLevel:(NSInteger)minLevel
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setClsMinLevel:(NSInteger)minLevel
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [QCloudLogger sharedLogger].logClsLevel = (QCloudLogLevel)(7 - minLevel);
   resolve(nil);
@@ -495,27 +495,27 @@ RCT_REMAP_METHOD(setClsMinLevel,
 
 // 设备信息设置
 RCT_REMAP_METHOD(setDeviceID,
-                 setDeviceIDDeviceID:(nonnull NSString *)deviceID
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setDeviceID:(nonnull NSString *)deviceID
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     [QCloudLogger sharedLogger].deviceID = deviceID;
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(setDeviceModel,
-                 setDeviceModelDeviceModel:(nonnull NSString *)deviceModel
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setDeviceModel:(nonnull NSString *)deviceModel
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
   [QCloudLogger sharedLogger].deviceModel = deviceModel;
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(setAppVersion,
-                 setAppVersionAppVersion:(nonnull NSString *)appVersion
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setAppVersion:(nonnull NSString *)appVersion
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
   [QCloudLogger sharedLogger].appVersion = appVersion;
   resolve(nil);
@@ -523,9 +523,9 @@ RCT_REMAP_METHOD(setAppVersion,
 
 // 扩展字段设置
 RCT_REMAP_METHOD(setExtras,
-                 setExtrasExtras:(nonnull NSDictionary *)extras
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 setExtras:(nonnull NSDictionary *)extras
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
   [QCloudLogger sharedLogger].extendInfo = extras;
   resolve(nil);
@@ -533,10 +533,10 @@ RCT_REMAP_METHOD(setExtras,
 
 // 加密配置
 RCT_REMAP_METHOD(setLogFileEncryptionKey,
-                 setLogFileEncryptionKeyKey:(NSData *)key
+                 setLogFileEncryptionKey:(NSData *)key
                  iv:(NSData *)iv
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
   [QCloudLogger sharedLogger].aesKey = key;
   [QCloudLogger sharedLogger].aesIv = iv;
@@ -545,10 +545,10 @@ RCT_REMAP_METHOD(setLogFileEncryptionKey,
 
 // CLS 通道配置
 RCT_REMAP_METHOD(setCLsChannelAnonymous,
-                 setCLsChannelAnonymousTopicId:(NSString *)topicId
+                 setCLsChannelAnonymous:(NSString *)topicId
                  endpoint:(NSString *)endpoint
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCLSLoggerOutput * output = [[QCloudCLSLoggerOutput alloc]initWithTopicId:topicId endpoint:endpoint];
     [[QCloudLogger sharedLogger]addLogger:output];
@@ -556,12 +556,12 @@ RCT_REMAP_METHOD(setCLsChannelAnonymous,
 }
 
 RCT_REMAP_METHOD(setCLsChannelStaticKey,
-                 setCLsChannelStaticKeyTopicId:(NSString *)topicId
+                 setCLsChannelStaticKey:(NSString *)topicId
                  endpoint:(NSString *)endpoint
                  secretId:(NSString *)secretId
                  secretKey:(NSString *)secretKey
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCLSLoggerOutput * output = [[QCloudCLSLoggerOutput alloc]initWithTopicId:topicId endpoint:endpoint];
     [output setupPermanentCredentialsSecretId:secretId secretKey:secretKey];
@@ -571,8 +571,8 @@ RCT_REMAP_METHOD(setCLsChannelStaticKey,
 
 RCT_REMAP_METHOD(updateCLsChannelSessionCredential,
                  updateCLsChannelSessionCredential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     if(!credential){
         if (self.clsSemaphore) {
@@ -589,10 +589,10 @@ RCT_REMAP_METHOD(updateCLsChannelSessionCredential,
 }
 
 RCT_REMAP_METHOD(setCLsChannelSessionCredential,
-                 setCLsChannelSessionCredentialTopicId:(NSString *)topicId
+                 setCLsChannelSessionCredential:(NSString *)topicId
                  endpoint:(NSString *)endpoint
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
   QCloudCLSLoggerOutput * output = [[QCloudCLSLoggerOutput alloc]initWithTopicId:topicId endpoint:endpoint];
     [output setupCredentialsRefreshBlock:^QCloudCredential * _Nonnull{
@@ -610,35 +610,35 @@ RCT_REMAP_METHOD(setCLsChannelSessionCredential,
 
 // 敏感规则管理
 RCT_REMAP_METHOD(addSensitiveRule,
-                 addSensitiveRuleRuleName:(NSString *)ruleName
+                 addSensitiveRule:(NSString *)ruleName
                  regex:(NSString *)regex
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     NSLog(@"ios 不支持：addSensitiveRuleRuleName");
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(removeSensitiveRule,
-                 removeSensitiveRuleRuleName:(NSString *)ruleName
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 removeSensitiveRule:(NSString *)ruleName
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     NSLog(@"ios 不支持：removeSensitiveRuleRuleName");
   resolve(nil);
 }
 
 RCT_REMAP_METHOD(getLogRootDir,
-        withResolver:(RCTPromiseResolveBlock)resolve
-        withRejecter:(RCTPromiseRejectBlock)reject)
+        getLogRootDir:(RCTPromiseResolveBlock)resolve
+        reject:(RCTPromiseRejectBlock)reject)
 {
     resolve([QCloudLogger sharedLogger].logDirctoryPath);
 }
 
 RCT_REMAP_METHOD(cancelAll,
-                 cancelAllServiceKey:(nonnull NSString *)serviceKey
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 cancelAll:(nonnull NSString *)serviceKey
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     if([QCloudCOSXMLService hasCosxmlServiceForKey:serviceKey]){
         QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
@@ -653,9 +653,9 @@ RCT_REMAP_METHOD(cancelAll,
 }
 
 RCT_REMAP_METHOD(deleteBucket,
-                 deleteBucketServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 deleteBucket:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudDeleteBucketRequest* request = [[QCloudDeleteBucketRequest alloc ] init];
@@ -675,9 +675,9 @@ RCT_REMAP_METHOD(deleteBucket,
 }
 
 RCT_REMAP_METHOD(deleteObject,
-                 deleteObjectServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath region:(nullable NSString *)region versionId:(nullable NSString *)versionId credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 deleteObject:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath region:(nullable NSString *)region versionId:(nullable NSString *)versionId credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudDeleteObjectRequest* request = [[QCloudDeleteObjectRequest alloc ] init];
@@ -701,27 +701,27 @@ RCT_REMAP_METHOD(deleteObject,
 }
 
 RCT_REMAP_METHOD(doesBucketExist,
-                 doesBucketExistServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 doesBucketExist:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     resolve([NSNumber numberWithBool:[service doesBucketExist:bucket]]);
 }
 
 RCT_REMAP_METHOD(doesObjectExist,
-                 doesObjectExistServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 doesObjectExist:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     resolve([NSNumber numberWithBool:[service doesObjectExistWithBucket:bucket object:cosPath]]);
 }
 
 RCT_REMAP_METHOD(getBucketAccelerate,
-                 getBucketAccelerateServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 getBucketAccelerate:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetBucketAccelerateRequest* request = [[QCloudGetBucketAccelerateRequest alloc] init];
@@ -742,9 +742,9 @@ RCT_REMAP_METHOD(getBucketAccelerate,
 }
 
 RCT_REMAP_METHOD(getBucketLocation,
-                 getBucketLocationServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 getBucketLocation:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetBucketLocationRequest* request = [[QCloudGetBucketLocationRequest alloc ] init];
@@ -764,9 +764,9 @@ RCT_REMAP_METHOD(getBucketLocation,
 }
 
 RCT_REMAP_METHOD(getBucket,
-                 getBucketServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region prefix:(nullable NSString *)prefix delimiter:(nullable NSString *)delimiter encodingType:(nullable NSString *)encodingType marker:(nullable NSString *)marker maxKeys:(nullable NSString *)maxKeys credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 getBucket:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region prefix:(nullable NSString *)prefix delimiter:(nullable NSString *)delimiter encodingType:(nullable NSString *)encodingType marker:(nullable NSString *)marker maxKeys:(nullable NSString *)maxKeys credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetBucketRequest* request = [[QCloudGetBucketRequest alloc ] init];
@@ -816,9 +816,9 @@ RCT_REMAP_METHOD(getBucket,
 }
 
 RCT_REMAP_METHOD(getBucketVersioning,
-                 getBucketVersioningServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 getBucketVersioning:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetBucketVersioningRequest* request = [[QCloudGetBucketVersioningRequest alloc ] init];
@@ -839,19 +839,19 @@ RCT_REMAP_METHOD(getBucketVersioning,
 }
 
 RCT_REMAP_METHOD(getObjectUrl,
-                 getObjectUrlServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket key:(nonnull NSString *)key region:(nonnull NSString *)region
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 getObjectUrl:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket key:(nonnull NSString *)key region:(nonnull NSString *)region
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     resolve([service getURLWithBucket:bucket object:key withAuthorization:false regionName:region]);
 }
 
 RCT_REMAP_METHOD(getPresignedUrl,
-                 getPresignedUrlServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath signValidTime:(nullable NSString *)signValidTime
+                 getPresignedUrl:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath signValidTime:(nullable NSString *)signValidTime
                  signHost:(nullable NSString *)signHost parameters:(nullable NSDictionary *)parameters region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetPresignedURLRequest* getPresignedURLRequest = [[QCloudGetPresignedURLRequest alloc] init];
@@ -892,10 +892,10 @@ RCT_REMAP_METHOD(getPresignedUrl,
 }
 
 RCT_REMAP_METHOD(getService,
-                 getServiceServiceKey:(nonnull NSString *)serviceKey
+                 getService:(nonnull NSString *)serviceKey
                  credential:(NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudGetServiceRequest* request = [[QCloudGetServiceRequest alloc ] init];
@@ -919,9 +919,9 @@ RCT_REMAP_METHOD(getService,
 }
 
 RCT_REMAP_METHOD(headBucket,
-                 headBucketServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:(NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 headBucket:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region credential:(NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudHeadBucketRequest* request = [[QCloudHeadBucketRequest alloc ] init];
@@ -946,9 +946,9 @@ RCT_REMAP_METHOD(headBucket,
 }
 
 RCT_REMAP_METHOD(headObject,
-                 headObjectServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath region:(nullable NSString *)region versionId:(nullable NSString *)versionId credential:(NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 headObject:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath region:(nullable NSString *)region versionId:(nullable NSString *)versionId credential:(NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudHeadObjectRequest* request = [[QCloudHeadObjectRequest alloc ] init];
@@ -977,9 +977,9 @@ RCT_REMAP_METHOD(headObject,
 }
 
 RCT_REMAP_METHOD(preBuildConnection,
-                 preBuildConnectionServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 preBuildConnection:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     //iOS不支持预连接
     NSLog(@"iOS does not support");
@@ -987,9 +987,9 @@ RCT_REMAP_METHOD(preBuildConnection,
 }
 
 RCT_REMAP_METHOD(putBucketAccelerate,
-                 putBucketAccelerateServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enable:(nonnull NSNumber *)enable credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 putBucketAccelerate:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enable:(nonnull NSNumber *)enable credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudPutBucketAccelerateRequest* request = [[QCloudPutBucketAccelerateRequest alloc ] init];
@@ -1017,9 +1017,9 @@ RCT_REMAP_METHOD(putBucketAccelerate,
 }
 
 RCT_REMAP_METHOD(putBucket,
-                 putBucketServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enableMAZ:(nullable NSString *)enableMAZ cosacl:(nullable NSString *)cosacl readAccount:(nullable NSString *)readAccount writeAccount:(nullable NSString *)writeAccount readWriteAccount:(nullable NSString *)readWriteAccount credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 putBucket:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enableMAZ:(nullable NSString *)enableMAZ cosacl:(nullable NSString *)cosacl readAccount:(nullable NSString *)readAccount writeAccount:(nullable NSString *)writeAccount readWriteAccount:(nullable NSString *)readWriteAccount credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
     QCloudPutBucketRequest* request = [[QCloudPutBucketRequest alloc ] init];
@@ -1058,9 +1058,9 @@ RCT_REMAP_METHOD(putBucket,
 }
 
 RCT_REMAP_METHOD(putBucketVersioning,
-                 putBucketVersioningServiceKey:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enable:(nonnull NSNumber *)enable credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 putBucketVersioning:(nonnull NSString *)serviceKey bucket:(nonnull NSString *)bucket region:(nullable NSString *)region enable:(nonnull NSNumber *)enable credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
 
     QCloudCOSXMLService * service = [self getQCloudCOSXMLService:serviceKey];
@@ -1089,9 +1089,9 @@ RCT_REMAP_METHOD(putBucketVersioning,
 }
 
 RCT_REMAP_METHOD(download,
-                 downloadTransferKey:(nonnull NSString *)transferKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath savePath:(nonnull NSString *)savePath resultCallbackKey:(nullable NSString *)resultCallbackKey stateCallbackKey:(nullable NSString *)stateCallbackKey progressCallbackKey:(nullable NSString *)progressCallbackKey versionId:(nullable NSString *)versionId trafficLimit:(nullable NSString *)trafficLimit region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 download:(nonnull NSString *)transferKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath savePath:(nonnull NSString *)savePath resultCallbackKey:(nullable NSString *)resultCallbackKey stateCallbackKey:(nullable NSString *)stateCallbackKey progressCallbackKey:(nullable NSString *)progressCallbackKey versionId:(nullable NSString *)versionId trafficLimit:(nullable NSString *)trafficLimit region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
 
   QCloudCredential* credentialNew = [self transferCredential:credential];
@@ -1200,9 +1200,9 @@ RCT_REMAP_METHOD(download,
 }
 
 RCT_REMAP_METHOD(pause,
-                 pauseTransferKey:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 pause:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     if([taskId hasPrefix:@"upload-"]){
         QCloudCOSXMLUploadObjectRequest* put = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -1233,9 +1233,9 @@ RCT_REMAP_METHOD(pause,
 }
 
 RCT_REMAP_METHOD(resume,
-                 resumeTransferKey:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 resume:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     if([taskId hasPrefix:@"upload-"]){
         QCloudCOSXMLUploadObjectRequest* put = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -1291,9 +1291,9 @@ RCT_REMAP_METHOD(resume,
 }
 
 RCT_REMAP_METHOD(cancel,
-                 cancelTransferKey:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 cancel:(nonnull NSString *)transferKey taskId:(nonnull NSString *)taskId
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     if([taskId hasPrefix:@"upload-"]){
         QCloudCOSXMLUploadObjectRequest* put = [QCloudCOSTaskCache() objectForKey:taskId];
@@ -1321,9 +1321,9 @@ RCT_REMAP_METHOD(cancel,
 }
 
 RCT_REMAP_METHOD(upload,
-                 uploadTransferKey:(nonnull NSString *)transferKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath fileUri:(nonnull NSString *)fileUri uploadId:(nullable NSString *)uploadId resultCallbackKey:(nullable NSString *)resultCallbackKey stateCallbackKey:(nullable NSString *)stateCallbackKey progressCallbackKey:(nullable NSString *)progressCallbackKey initMultipleUploadCallbackKey:(nullable NSString *)initMultipleUploadCallbackKey stroageClass:(nullable NSString *)stroageClass trafficLimit:(nullable NSString *)trafficLimit region:(nullable NSString *)region credential:( NSDictionary *)credential
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
+                 upload:(nonnull NSString *)transferKey bucket:(nonnull NSString *)bucket cosPath:(nonnull NSString *)cosPath fileUri:(nonnull NSString *)fileUri uploadId:(nullable NSString *)uploadId resultCallbackKey:(nullable NSString *)resultCallbackKey stateCallbackKey:(nullable NSString *)stateCallbackKey progressCallbackKey:(nullable NSString *)progressCallbackKey initMultipleUploadCallbackKey:(nullable NSString *)initMultipleUploadCallbackKey stroageClass:(nullable NSString *)stroageClass trafficLimit:(nullable NSString *)trafficLimit region:(nullable NSString *)region credential:( NSDictionary *)credential
+                 resolve:(RCTPromiseResolveBlock)resolve
+                 reject:(RCTPromiseRejectBlock)reject)
 {
     QCloudCredential* credentialNew = [self transferCredential:credential];
 
@@ -1604,7 +1604,7 @@ RCT_EXPORT_METHOD(addListener : (NSString *)eventName) {
   // Keep: Required for RN built in Event Emitter Calls.
 }
 
-RCT_EXPORT_METHOD(removeListeners : (NSInteger)count) {
+RCT_EXPORT_METHOD(removeListeners : (double)count) {
   // Keep: Required for RN built in Event Emitter Calls.
 }
 

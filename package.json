@@ -1,6 +1,6 @@
 {
   "name": "react-native-cos-sdk",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Tencent COS XML SDK for React Native",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
@@ -90,11 +90,26 @@
   },
   "packageManager": "^yarn@1.22.19",
   "jest": {
-    "preset": "react-native",
+    "testEnvironment": "node",
+    "testPathIgnorePatterns": [
+      "<rootDir>/example/",
+      "<rootDir>/__tests__/test_config\\.ts$"
+    ],
     "modulePathIgnorePatterns": [
       "<rootDir>/example/node_modules",
       "<rootDir>/lib/"
-    ]
+    ],
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
+    },
+    "transform": {
+      "^.+\\.tsx?$": [
+        "babel-jest",
+        {
+          "presets": ["module:metro-react-native-babel-preset"]
+        }
+      ]
+    }
   },
   "commitlint": {
     "extends": [
@@ -147,6 +162,14 @@
     "tabWidth": 2,
     "trailingComma": "es5",
     "useTabs": false
+  },
+  "codegenConfig": {
+    "name": "RNQCloudCosReactNativeSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.cosreactnative"
+    }
   },
   "react-native-builder-bob": {
     "source": "src",

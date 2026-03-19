@@ -147,7 +147,7 @@ export default class App extends React.Component {
               headerShown: true,
               headerRight: () => (
                 <TouchableOpacity onPress={() =>
-                  props.navigation.push('BucketAdd')
+                  props.navigation.push('BucketAdd', { region: undefined })
                   // props.navigation.push('Test')
                 }>
                   <View><Text style={{ color: "white", marginHorizontal: 16 }}>新建存储桶</Text></View>

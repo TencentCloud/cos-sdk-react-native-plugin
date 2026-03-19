@@ -43,9 +43,15 @@ android.iml
 # Cocoapods
 #
 example/ios/Pods
+example_072/ios/Pods
+example_076/ios/Pods
+example_084/ios/Pods
 
 # Ruby
 example/vendor/
+example_072/vendor/
+example_076/vendor/
+example_084/vendor/
 
 # node.js
 #
@@ -70,5 +76,9 @@ android/keystores/debug.keystore
 lib/
 
 example/src/config/config.ts
+example_config/config.ts
 *.hprof
 *.lock
+
+coverage/
+.claude/

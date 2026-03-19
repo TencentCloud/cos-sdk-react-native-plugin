@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { StyleSheet, View, Text, TextInput } from 'react-native';
-import { ProgressView } from "@react-native-community/progress-view";
 import { readableStorageSize } from '../Utils';
 import type { TransferState } from 'react-native-cos-sdk';
 
@@ -42,12 +41,9 @@ export class TransferProgressView extends React.Component<Props> {
           <Text style={[styles.text, { flex: 1 }]}>状态：{this.state.state ?? ""}</Text>
           <TextInput editable={false} defaultValue={this.state.progressString ?? ""} ref={component => this.textProgress = component} style={styles.text} />
         </View>
-        <ProgressView
-          progressTintColor="#1976D2"
-          trackTintColor="gray"
-          progress={this.state.progress}
-          style={{ width: undefined, marginTop: 8 }}
-        />
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${Math.min(this.state.progress * 100, 100)}%` }]} />
+        </View>
       </View>
     );
   }
@@ -63,5 +59,17 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     marginTop: 15
+  },
+  progressTrack: {
+    height: 4,
+    backgroundColor: 'gray',
+    borderRadius: 2,
+    marginTop: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#1976D2',
+    borderRadius: 2,
   },
 });

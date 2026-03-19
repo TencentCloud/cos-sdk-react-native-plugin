@@ -9,22 +9,28 @@ import { IllegalArgumentError } from './data_model/errors';
 import type { DnsMapParameters } from './data_model/parameters';
 import type { LogEntity, LogLevel } from './data_model/log';
 
+declare var global: { __turboModuleProxy: unknown };
+
 const LINKING_ERROR =
   `The package 'react-native-cos-sdk' doesn't seem to be linked. Make sure: \n\n` +
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-const QCloudCosReactNative = NativeModules.QCloudCosReactNative
-  ? NativeModules.QCloudCosReactNative
-  : new Proxy(
-      {},
-      {
-        get() {
-          throw new Error(LINKING_ERROR);
-        },
-      }
-    );
+const isTurboModuleEnabled = global.__turboModuleProxy != null;
+
+const QCloudCosReactNative = isTurboModuleEnabled
+  ? require('./NativeQCloudCosReactNative').default
+  : NativeModules.QCloudCosReactNative
+    ? NativeModules.QCloudCosReactNative
+    : new Proxy(
+        {},
+        {
+          get() {
+            throw new Error(LINKING_ERROR);
+          },
+        }
+      );
 
 const CosEventEmitter = NativeModules.CosEventEmitter
 ? NativeModules.CosEventEmitter
@@ -58,7 +64,11 @@ class Cos {
     this.logListeners = new Map()
 
     if(Platform.OS === 'ios'){
-      this.emitter = new NativeEventEmitter(CosEventEmitter);
+      // On new architecture, use the TurboModule directly to avoid NativeEventEmitter warnings.
+      // On old architecture, use the dedicated CosEventEmitter (RCTEventEmitter subclass).
+      this.emitter = new NativeEventEmitter(
+        isTurboModuleEnabled ? QCloudCosReactNative : CosEventEmitter
+      );
     } else if(Platform.OS === 'android') {
       this.emitter = new NativeEventEmitter(QCloudCosReactNative);
     } else {
@@ -340,4 +350,22 @@ class Cos {
   }
 
 }
+
+// ============================================
+// Public type exports for external consumers
+// ============================================
+export { CosService } from './cos_service';
+export { CosTransferManger, TransferTask } from './cos_transfer';
+export type { ResultSuccessCallBack, ResultFailCallBack, ResultListener, StateCallBack, ProgressCallBack, InitMultipleUploadCallBack } from './cos_transfer';
+export type { CosXmlServiceConfig, TransferConfig } from './data_model/config';
+export type { SessionQCloudCredentials, STSCredentialScope } from './data_model/credentials';
+export { TransferState } from './data_model/enums';
+export { CosXmlClientError, CosXmlServiceError, IllegalArgumentError } from './data_model/errors';
+export type { DnsMapParameters, PutBucketParameters, GetBucketParameters, PresignedUrlParameters, UploadParameters, DownloadParameters } from './data_model/parameters';
+export type { ListAllMyBuckets, Bucket } from './data_model/bucket';
+export type { BucketContents, Content, CommonPrefixes } from './data_model/object';
+export type { Owner } from './data_model/owner';
+export type { LogEntity } from './data_model/log';
+export { LogLevel, LogCategory } from './data_model/log';
+
 export default new Cos()

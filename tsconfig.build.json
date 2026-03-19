@@ -1,5 +1,15 @@
-
 {
   "extends": "./tsconfig",
-  "exclude": ["example"]
+  "compilerOptions": {
+    "rootDir": "src"
+  },
+  "exclude": [
+    "example",
+    "example_test",
+    "example_072",
+    "example_076",
+    "example_084",
+    "example_config",
+    "__tests__"
+  ]
 }

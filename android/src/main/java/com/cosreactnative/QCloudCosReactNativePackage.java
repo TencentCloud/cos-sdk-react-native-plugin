@@ -1,28 +1,73 @@
 package com.cosreactnative;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.facebook.react.ReactPackage;
+import com.facebook.react.TurboReactPackage;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
-import com.facebook.react.uimanager.ViewManager;
+import com.facebook.react.module.model.ReactModuleInfo;
+import com.facebook.react.module.model.ReactModuleInfoProvider;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-public class QCloudCosReactNativePackage implements ReactPackage {
-  @NonNull
+public class QCloudCosReactNativePackage extends TurboReactPackage {
+
+  @Nullable
   @Override
-  public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactContext) {
-    List<NativeModule> modules = new ArrayList<>();
-    modules.add(new QCloudCosReactNativeModule(reactContext));
-    return modules;
+  public NativeModule getModule(@NonNull String name, @NonNull ReactApplicationContext reactContext) {
+    if (QCloudCosReactNativeModule.NAME.equals(name)) {
+      return new QCloudCosReactNativeModule(reactContext);
+    }
+    return null;
   }
 
-  @NonNull
   @Override
-  public List<ViewManager> createViewManagers(@NonNull ReactApplicationContext reactContext) {
-    return Collections.emptyList();
+  public ReactModuleInfoProvider getReactModuleInfoProvider() {
+    return () -> {
+      final Map<String, ReactModuleInfo> moduleInfos = new HashMap<>();
+      boolean isTurboModule = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED;
+      moduleInfos.put(
+        QCloudCosReactNativeModule.NAME,
+        createReactModuleInfo(isTurboModule)
+      );
+      return moduleInfos;
+    };
+  }
+
+  private ReactModuleInfo createReactModuleInfo(boolean isTurboModule) {
+    // RN 0.74+ removed the 7-arg constructor (hasConstants parameter).
+    // Use reflection to support both old and new versions.
+    try {
+      // Try 6-arg constructor first (RN >= 0.74)
+      return ReactModuleInfo.class
+        .getConstructor(String.class, String.class, boolean.class, boolean.class, boolean.class, boolean.class)
+        .newInstance(
+          QCloudCosReactNativeModule.NAME,
+          QCloudCosReactNativeModule.NAME,
+          false, // canOverrideExistingModule
+          false, // needsEagerInit
+          false, // isCxxModule
+          isTurboModule // isTurboModule
+        );
+    } catch (Exception e) {
+      try {
+        // Fall back to 7-arg constructor (RN < 0.74)
+        return ReactModuleInfo.class
+          .getConstructor(String.class, String.class, boolean.class, boolean.class, boolean.class, boolean.class, boolean.class)
+          .newInstance(
+            QCloudCosReactNativeModule.NAME,
+            QCloudCosReactNativeModule.NAME,
+            false, // canOverrideExistingModule
+            false, // needsEagerInit
+            true,  // hasConstants
+            false, // isCxxModule
+            isTurboModule // isTurboModule
+          );
+      } catch (Exception ex) {
+        throw new RuntimeException("Could not create ReactModuleInfo", ex);
+      }
+    }
   }
 }

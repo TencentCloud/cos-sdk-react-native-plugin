@@ -50,6 +50,14 @@ android {
     targetCompatibility JavaVersion.VERSION_1_8
   }
 
+  sourceSets {
+    main {
+      if (!isNewArchitectureEnabled()) {
+        java.srcDirs += ['src/oldarch/java']
+      }
+    }
+  }
+
 }
 
 rootProject.allprojects {
@@ -77,14 +85,6 @@ dependencies {
 //  implementation(name: 'qcloud-foundation-1.5.55', ext: 'aar')
 //  implementation(name: 'cos-android-nobeacon-5.9.13', ext: 'aar')
 
-  implementation 'com.qcloud.cos:cos-android:5.9.46'
+  implementation 'com.qcloud.cos:cos-android:5.9.50'
   implementation 'com.google.code.gson:gson:2.10.1'
-}
-
-if (isNewArchitectureEnabled()) {
-  react {
-    jsRootDir = file("../src/")
-    libraryName = "QCloudCosReactNative"
-    codegenJavaPackageName = "com.cosreactnative"
-  }
 }
